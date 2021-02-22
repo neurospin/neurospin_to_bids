@@ -181,12 +181,12 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
                      dataset_name=None):
     dataset_name, data_path = get_bids_default_path(data_root_path,
                                                     dataset_name)
-    #print(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*'))
+    # ~ print(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*'))
     if glob.glob(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*')):
         sub_folders = glob.glob(
             os.path.join(behav_path, 'sub-*', 'ses-*', 'func'))
     else:
-        #print(os.path.join(data_root_path, behav_path,'sub-*', 'func'))
+        # ~ print(os.path.join(data_root_path, behav_path,'sub-*', 'func'))
         sub_folders = glob.glob(
             os.path.join(data_root_path, behav_path, 'sub-*', 'func'))
 
@@ -197,13 +197,13 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
         )
     else:
         for sub_folder in sub_folders:
-            #file_path = sub_folder.replace(behav_path + '/', '')
+            # ~ file_path = sub_folder.replace(behav_path + '/', '')
             file_path = sub_folder
             for file_name in os.listdir(os.path.join(sub_folder)):
 
-                # dest_directory = os.path.join(data_path, file_path)
-                # if not os.path.exists(dest_directory):
-                #     os.makedirs(dest_directory)
+                # ~ dest_directory = os.path.join(data_path, file_path)
+                # ~ if not os.path.exists(dest_directory):
+                    # ~ os.makedirs(dest_directory)
 
                 file_ext = []
                 last = ''
@@ -430,10 +430,12 @@ def bids_acquisition_download(data_root_path='',
     6) Event file corresponding to downloaded bold.nii not found
     """
 
-    ### CHECK PATHS AND FILES
+    ####################################
+    # CHECK PATHS AND FILES
+    ####################################
 
     # exp_info path where is the participants.tsv
-    # print(data_root_path)
+    # ~ print(data_root_path)
     exp_info_path = os.path.join(data_root_path, 'exp_info')
     if not os.path.exists(exp_info_path):
         raise Exception('exp_info directory not found')
@@ -455,16 +457,16 @@ def bids_acquisition_download(data_root_path='',
     if not os.path.exists(report_path):
         os.makedirs(report_path)
     download_report = open(os.path.join(report_path, download_report), 'w')
-    #report_line = '%s,%s,%s\n' % ('subject_id', 'session_id', 'download_file')
-    #download_report.write(report_line)
+    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id', 'download_file')
+    # ~ download_report.write(report_line)
     list_imported = []
     list_already_imported = []
     list_warning = []
 
     # Create a dataFrame to store participant information
-    #df_participant = pd.DataFrame()
-    #Dict for info participant
-    #list_all_participants = {}
+    # ~ df_participant = pd.DataFrame()
+    # Dict for info participant
+    # ~ list_all_participants = {}
     dic_info_participants = OrderedDict()
 
     # List for the bacth file for dc2nii_batch command
@@ -473,10 +475,12 @@ def bids_acquisition_download(data_root_path='',
     # List for data to deface
     files_for_pydeface = []
 
-    #Dict of descriptors to be added
+    # Dict of descriptors to be added
     dict_descriptors = {}
 
-    ### GETTING FOR INFORMATION TO DOWNLOAD
+    ####################################
+    # GETTING INFORMATION TO DOWNLOAD
+    ####################################
 
     # Download command for each subject/session
     # one line has the following information
@@ -488,7 +492,7 @@ def bids_acquisition_download(data_root_path='',
                       sep='\t',
                       index_col=False)
 
-    #print(df_participant)
+    # ~ print(df_participant)
 
     for row_idx, subject_info in pop.iterrows():
         # Fill the partcipant information for the participants.tsv
@@ -499,7 +503,7 @@ def bids_acquisition_download(data_root_path='',
             for k, v in info_participant.items():
                 if k not in existing_items:
                     dico_add[k] = v
-            #fusion dicos
+            # fusion dicos
             existing_items.update(dico_add)
             dic_info_participants[subject_info[0]] = existing_items
         else:
@@ -554,24 +558,24 @@ def bids_acquisition_download(data_root_path='',
         # NeuroSpin standard is yyyymmdd -> Bids standard is YYYY-MM-DD
         acq_date = subject_info['acq_date'].replace('-', '').replace('\n', '')
 
-        #acq_label
+        # acq_label
         acq_label = subject_info['acq_label']
 
-        #dir_label
-        #dir_label = subject_info['dir_label']
+        # dir_label
+        # ~ dir_label = subject_info['dir_label']
 
         # nip number
         nip = subject_info['NIP']
 
         # Get appropriate download file. As specific as possible
-        # specs_path = file_manager_default_file(exp_info_path,
-        #                                optional_filters, 'download',
-        #                               file_type='tsv',
-        #                               allow_other_fields=False)
-        #report_line = '%s,%s,%s\n' % (subject_id, session_id, specs_path)
-        #download_report.write(report_line)
+        # ~ specs_path = file_manager_default_file(exp_info_path,
+        # ~                                        optional_filters, 'download',
+        # ~                                        file_type='tsv',
+        # ~                                        allow_other_fields=False)
+        # ~ report_line = '%s,%s,%s\n' % (subject_id, session_id, specs_path)
+        # ~ download_report.write(report_line)
 
-        #specs = pd.read_csv(specs_path, dtype=str, sep='\t', index_col=False)
+        # ~ specs = pd.read_csv(specs_path, dtype=str, sep='\t', index_col=False)
 
         # Retrieve list of list for seqs to import
         # One tuple is configured as :(file_to_import;acq_folder;acq_name)
@@ -581,15 +585,15 @@ def bids_acquisition_download(data_root_path='',
         print("Scans for ", subject_info['NIP'])
         print(subject_info['to_import'])
         seqs_to_retrieve = literal_eval(subject_info['to_import'])
-        #Convert the first element id there is only one sequence, otherwise
-        #each value will be used as str and note tuple).
+        # Convert the first element id there is only one sequence, otherwise
+        # each value will be used as str and note tuple).
         if isinstance(seqs_to_retrieve[0], str):
             seqs_to_retrieve = [seqs_to_retrieve]
 
         # download data, store information in batch files for anat/fmri
         # download data for meg data
         for value in seqs_to_retrieve:
-            #print(seqs_to_retrieve)
+            # ~ print(seqs_to_retrieve)
             def get_value(key, text):
                 m = re.search(key + '-(.+?)_', text)
                 if m:
@@ -617,9 +621,9 @@ def bids_acquisition_download(data_root_path='',
                     os.makedirs(meg_path)
 
                 # Create the sub-emptyroom
-                #sub-emptyroom_path = os.path.join(data_root_path, 'sub_emptyroom')
-                #if not os.path.exists(sub-emptyroom_path):
-                #    os.makedirs(sub-emptyroom_path)
+                # ~ sub-emptyroom_path = os.path.join(data_root_path, 'sub_emptyroom')
+                # ~ if not os.path.exists(sub-emptyroom_path):
+                    # ~ os.makedirs(sub-emptyroom_path)
 
                 meg_file = os.path.join(db_path, nip, acq_date, value[0])
                 print(meg_file)
@@ -631,15 +635,15 @@ def bids_acquisition_download(data_root_path='',
                                                     file_tag=tag,
                                                     acq_label=acq_label,
                                                     file_type='tif')
-                #output_path = os.path.join(target_path, filename)
-                #print(output_path)
-                #shutil.copyfile(meg_file, output_path)
+                # ~ output_path = os.path.join(target_path, filename)
+                # ~ print(output_path)
+                # ~ shutil.copyfile(meg_file, output_path)
                 raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
 
                 write_raw_bids(raw, filename, target_path, overwrite=True)
                 # add event
                 # create json file
-                #copy the subject emptyroom
+                # copy the subject emptyroom
 
             # ANAT and FUNC case
             # todo: bad practices, to refactor for the sake of simplicity
@@ -651,13 +655,13 @@ def bids_acquisition_download(data_root_path='',
                 nip_dirs = glob.glob(
                     os.path.join(db_path, str(acq_date),
                                  str(nip) + '*'))
-                #print(os.path.join(db_path, str(acq_date), str(nip) + '*'))
+                # ~ print(os.path.join(db_path, str(acq_date), str(nip) + '*'))
                 if len(nip_dirs) < 1:
                     list_warning.append(
                         f"\n {Bcolors.WARNING}WARNING: No directory found for given NIP {nip} and SESSION {session_id}{Bcolors.ENDC}"
                     )
-                    #print(message)
-                    #download_report.write(message)
+                    # ~ print(message)
+                    # ~ download_report.write(message)
                     download = False
                 elif len(nip_dirs) > 1:
                     list_warning.append(
@@ -666,25 +670,25 @@ def bids_acquisition_download(data_root_path='',
                             mention the session of the subject for this date, \
                             2 sessions for the same subject the same day are \
                             possible{Bcolors.ENDC}")
-                    #print(message)
-                    #download_report.write(message)
+                    # ~ print(message)
+                    # ~ download_report.write(message)
                     download = False
                 else:
                     path_file_glob = os.path.join(
                         nip_dirs[0], '{0:06d}_*'.format(int(value[0])))
-                    #print(path_file_glob)
+                    # ~ print(path_file_glob)
                     dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
                     list_warning.append("\n WARNING: file not found " +
                                         path_file_glob)
-                    #print(message)
-                    #download_report.write(message)
+                    # ~ print(message)
+                    # ~ download_report.write(message)
                 elif download:
                     dicom_path = dicom_paths[0]
                     list_imported.append("\n IMPORTATION OF " + dicom_path)
-                    #print(message)
-                    #download_report.write(message)
+                    # ~ print(message)
+                    # ~ download_report.write(message)
                     # Expecting page 10 bids specification file name
                     filename = get_bids_file_descriptor(subject_id,
                                                         task_id=run_task,
@@ -725,12 +729,12 @@ def bids_acquisition_download(data_root_path='',
                             }})
 
                     if len(value) == 4:
-                        #print('value[3]', value[3] )
+                        # ~ print('value[3]', value[3] )
                         filename_json = os.path.join(target_path,
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
-        #Importation and conversion of dicom files
+        # Importation and conversion of dicom files
         dcm2nii_batch = dict(Options=dict(isGz='false',
                                           isFlipY='false',
                                           isVerbose='false',
@@ -785,8 +789,8 @@ def bids_acquisition_download(data_root_path='',
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
         #    done_file.close()
 
-        #Data to deface
-        #print(files_for_pydeface)
+        # Data to deface
+        # ~ print(files_for_pydeface)
         if files_for_pydeface:
             try:
                 # warning: Isn't that too restrictive?
@@ -821,7 +825,7 @@ def bids_acquisition_download(data_root_path='',
         df_participant.to_csv(participants_path, sep='\t')
 
         if dict_descriptors:
-            #print(dict_descriptors)
+            # ~ print(dict_descriptors)
             # Adding a new key value pair in a json file such as taskname
             for k, v in dict_descriptors.items():
                 with open(k, 'r+') as json_file:
@@ -836,8 +840,8 @@ def bids_acquisition_download(data_root_path='',
         if copy_events == "y":
             bids_copy_events(behav_path, data_root_path, dataset_name)
 
-        #Validate paths with BIDSValidator
-        #see also http://bids-standard.github.io/bids-validator/
+        # Validate paths with BIDSValidator
+        # see also http://bids-standard.github.io/bids-validator/
         validation_bids = yes_no('\nDo you want to use a bids validator?',
                                  default=None)
         if validation_bids:
