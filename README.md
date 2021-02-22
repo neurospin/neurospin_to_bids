@@ -1,64 +1,52 @@
-This script exports imaging data from the NeuroSpin archive into the 
-BIDS format ([Brain Imaging Data Structure](http://bids.neuroimaging.io)).
+This script exports imaging data from the NeuroSpin archive in
+BIDS format ([Brain Imaging Data Structure](https://bids.neuroimaging.io/)).
 The BIDS format has been selected because it is simple, easy to share
 and supported by lots of software. We are focused on MRI data but other
 modalities can be added (diffusion imaging, behavioral, ...). For a full
 description, please consult the
-[BIDS specifications](http://bids.neuroimaging.io/bids_spec1.0.0.pdf).
+[BIDS specification](https://doi.org/10.5281/zenodo.3686061).
 
-This script import data, but also:
-* all files such as README, CHANGES, dataset_descrption.json ...
-* deface anatomical data if you need
-* use the Bids-validator
+This script imports data, but can also:
+* create ancillary files such as README, CHANGES, dataset_descrption.json
+* optionally, deface anatomical data with pydeface
+* run the bids-validator on the created dataset
 
-# Dependencies (can simply pip install packages)
 
-        pip install pandas --user
-        pip install mne --user
-        pip install mne-bids --user
-        pip install pydeface --user
+# Installation and usage
 
-# Installation and usage:
-## With the installation of the module
-You can install the unicog repository and use `neurospin_to_bids.py` from anywhere.
-To install the module, please tape:
+## One-off installation with pip
 
-        cd <path_to_download_to>
-        git clone https://github.com/neurospin/unicog.git
-        python setup.py install --user
+The easiest way to install the latest version of neurospin_to_bids is
+by using ``pip``. Using a virtual environment is recommended:
 
-and use as follow:
+```shell
+python3 -m venv venv/
+. venv/bin/activate
+pip install git+https://github.com/neurospin/neurospin_to_bids.git
+```
 
-        neurospin_to_bids.py -h
+## Command-line usage
 
-## Without the installation of the module
-If you don't want install the module, you can just use the `neurospin_to_bids.py` script as a python script.
-Simply download the unicog repository:
-
-        cd <path_to_download_to>
-        git clone https://github.com/neurospin/unicog.git
-
-and use as follow for instance:
-                                        
-        python <path_to_download_to>/unicog/bids/neurospin_to_bids.py -h
+    neurospin_to_bids --help
 
 
 # Preparation of data
+
 ## Basic importation
-**To import data from NeuroSpin, you have to be connected to the NeuroSpin network.** 
-The information about subjects and data to import are stored into a **exp_info** directory. For instance:
+
+**To import data from NeuroSpin, you have to be connected to the Intra network**, and the ``/neurospin/acquisition`` directory must be mounted (this is the case on all workstations configured by IT).
+
+You have to store the information about subjects and data to import in a **exp_info** directory. For instance:
 
         ./exp_info
         ├── participants.tsv
 
-
-See a small example at [https://github.com/neurospin/unicog/tree/master/bids/test_dataset/](https://github.com/neurospin/unicog/tree/master/bids/test_dataset/)
-
-Also [https://github.com/neurospin/unicog/tree/master/unicogfmri/localizer_pypreprocess/scripts/exp_info](https://github.com/neurospin/unicog/tree/master/unicogfmri/localizer_pypreprocess/scripts/exp_info)
+See several small examples in [test_dataset/](test_dataset/). See also [https://github.com/neurospin/unicog/tree/master/unicogfmri/localizer_pypreprocess/scripts/exp_info](unicog/unicogfmri/localizer_pypreprocess/scripts/exp_info)
 
 
 ## Advanced importation
-The importaiton of events are also possible if the *_events.tsv files are correctly set up.
+
+The importation of events are also possible if the \*_events.tsv files are correctly set up.
 Here is an example:
 
         ./exp_info
@@ -74,48 +62,50 @@ Here is an example:
                     └── sub-02_task-loc_events.tsv
 
 # Importation of data
-Now we set all files into **exp_info** directory, you can launch the importation:
+
+When the **exp_info** directory is ready, you can launch the importation:
 
         cd <path_where_is_exp_info>
-        python neurospin_to_bids.py
+        neurospin_to_bids
 
-* The `<path_where_is_exp_info` folder must contain an `exp_info` subfolder containing the participants.tsv file. For more details on the content and structure of these files, read the Additional information section.
-* The `neurospin_to_bids.py` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script when used as a bash command accept three optional arguments:
-    * **-root_path**: specifies the target folder - by default the current directory.
-    * **-dataset_name**: the folder name to export the dataset to, by default subfolder `bids_dataset` of the target folder.
-    * **-dry-run**: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
+* The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
+    * ``-root_path``: specifies the target folder - by default the current directory.
+    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder `bids_dataset` of the target folder.
+    * ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
 
 If instead we were to specify the target folder (the one containing an
 `exp_info` subfolder) and a name for the BIDS dataset subfolder, we would
 run the command as follows:
 
-        neurospin_to_bids.py -root_path some_path -dataset_name my_dataset
+        neurospin_to_bids -root_path some_path -dataset_name my_dataset
 
 To read the script documentation you can write:
 
-        neurospin_to_bids.py -h
+        neurospin_to_bids -h
 
-# Additionnal information
+
+# Additional information
 
 ## Basic BIDS organization
+
 For anatomical and functional data, the bids nomenclature corresponds to the following organisation of files.
 
 Anatomical:
 
-        sub­-<participant_label>/
+        sub-<participant_label>/
             [ses-<session_label>/]
                 anat/
-                    sub­-<participant_label>[_ses-<session_label>]_T1w.nii[.gz]
+                    sub-<participant_label>[_ses-<session_label>]_T1w.nii[.gz]
 
 Functional:
 
-        sub­-<participant_label>/
+        sub-<participant_label>/
             [ses-<session_label>/]
                 func/
-                    sub­-<participant_label>[_ses-<session_label>]_task-­<task_label>[_run-­<run_label>]_bold.nii[.gz]
+                    sub-<participant_label>[_ses-<session_label>]_task-<task_label>[_run-<run_label>]_bold.nii[.gz]
 
 As seen by the examples, if you have a session level, a `ses-<session_label>`
-subfolder is added under the `sub­-<participant_label>` folder and it would
+subfolder is added under the `sub-<participant_label>` folder and it would
 then be the one to contain the modality folders (here, `anat` or `func`).
 Moreover it should also form part of the file names.
 
@@ -124,18 +114,18 @@ run for a particular task.
 
 There are plenty more optional fields to include in the file names depending
 on your needs. For more details on that please check directly the
-[BIDS specifications](http://bids.neuroimaging.io/bids_spec1.0.0.pdf).
+[BIDS specifications](https://bids.neuroimaging.io/).
 
-Fmap:
+Field maps:
+
 This script has an implementation of **case 4: Multiple phase encoded directions** of the BIDS specification.
 
-        sub­-<participant_label>/
+        sub-<participant_label>/
             [ses-<session_label>/]
                 fmap/
-                    sub­<participant_label>[_ses-<session_label>][_acq-<label>]_dir-<label>[_run-<index>]_epi.nii[.gz]
-                    sub­<participant_label>[_ses-<session_label>][_acq-<label>]_dir-<label>[_run-<index>]_epi.json
-					
-					
+                    sub-<participant_label>[_ses-<session_label>][_acq-<label>]_dir-<label>[_run-<index>]_epi.nii[.gz]
+                    sub-<participant_label>[_ses-<session_label>][_acq-<label>]_dir-<label>[_run-<index>]_epi.json
+
 
 ## Files in the `exp_info` folder specifying the data download
 
@@ -167,10 +157,10 @@ will be added to a new `participants.tsv` file included under the
 `bids_dataset` top folder.
 
 #### User case with 2 sessions the same day with the same participant
-For instance, if a participant undergoes an examen in the morning and in the afternoon, 
+For instance, if a participant undergoes an examination in the morning and in the afternoon, 
 you have to complete the NIP with the number of session. The nip level in Neurospin
 is labelled as follow : '<nip>-<exman-number>-<automatic-number>' 
-The examen number is automatically incremented for each new examen. Don't mange about
+The examen number is automatically incremented for each new examination. Don't mange about
 the automatic number. 
 
 Here is an example for the `participants.tsv` file:
@@ -213,7 +203,7 @@ Here is an example of `sub-*_<task>_events.tsv` following the BIDS standard:
         11.4    1          r_hand_audio
         15.0    1          sentence_audio
 
-the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as ​response_time or other arbitrary additional columns respecting subject anonimity. See the [BIDS specification](http://bids.neuroimaging.io/bids_spec1.0.0.pdf).
+the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject anonimity. See the [BIDS specification](https://bids.neuroimaging.io/).
 
 
 # Deface
@@ -225,11 +215,11 @@ Please see [https://github.com/poldracklab/pydeface](https://github.com/poldrack
 
 # Summary of importation
 ## Files imported and warnings
-A summary will be displayed at the end of importation into the terminal. The summart is also saved into ./report/download_report_*.csv file. This file is not in the bids_dataset repository because it is not part of BIDS.
+A summary will be displayed at the end of importation into the terminal. The summary is also saved into ``./report/download_report_*.csv`` file. This file is not in the bids_dataset repository because it is not part of BIDS.
 
 ## BIDS validation
-If you are selected the bids validation option, the summary is saved in ./report/report_bids_valisation.txt .
+If you are selected the bids validation option, the summary is saved in ``./report/report_bids_validation.txt`` .
 
 # Notes
 * Note 1: if the importation has been interrupted or partially then, then launch again the script. The last partially downloaded data folder will be redownloaded from scratch.
-* Note 2: the .tsv extension means "tabulation separated values", so each value must be separated by a tabulation and not commas, spaces or dots. If files in `exp_info` are not tsv, most likely the `neurospin_to_bids.py` script will fail. Please make sure your files comply with your favorite text editor.
+* Note 2: the .tsv extension means "tabulation separated values", so each value must be separated by a tabulation and not commas, spaces or dots. If files in `exp_info` are not tsv, most likely the `neurospin_to_bids` script will fail. Please make sure your files comply with your favorite text editor.
