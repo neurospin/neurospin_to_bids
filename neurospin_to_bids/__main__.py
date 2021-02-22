@@ -19,7 +19,7 @@ import pydeface.utils as pdu
 import yaml
 from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
-from pkg_resources import DistributionNotFound, Requirement, resource_filename
+import pkg_resources
 
 NEUROSPIN_DATABASES = {
     'prisma': '/neurospin/acquisition/database/Prisma_fit',
@@ -790,13 +790,13 @@ def bids_acquisition_download(data_root_path='',
         if files_for_pydeface:
             try:
                 # warning: Isn't that too restrictive?
-                template = resource_filename(
-                    Requirement.parse("unicog"),
-                    "bids/template_deface/mean_reg2mean.nii.gz")
-                facemask = resource_filename(
-                    Requirement.parse("unicog"),
-                    "bids/template_deface/facemask.nii.gz")
-            except DistributionNotFound:
+                template = pkg_resources.resource_filename(
+                    "neurospin_to_bids",
+                    "template_deface/mean_reg2mean.nii.gz")
+                facemask = pkg_resources.resource_filename(
+                    "neurospin_to_bids",
+                    "template_deface/facemask.nii.gz")
+            except pkg_resources.DistributionNotFound:
                 template = (
                     "/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/"
                     "unicog-dev/bids/template_deface/mean_reg2mean.nii.gz")
@@ -865,7 +865,7 @@ def bids_acquisition_download(data_root_path='',
     print('\n')
 
 
-if __name__ == "__main__":
+def main():
     # Parse arguments from console
     parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
     parser.add_argument('-root_path',
@@ -905,3 +905,6 @@ if __name__ == "__main__":
                               copy_events=args.copy_events[0],
                               deface=deface,
                               dry_run=args.dry_run[0])
+
+if __name__ == "__main__":
+    main()

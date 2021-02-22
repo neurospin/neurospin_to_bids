@@ -1,0 +1,3 @@
+exclude todo.txt
+graft neurospin_to_bids/template_deface
+prune test_dataset
