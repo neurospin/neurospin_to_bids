@@ -1,6 +1,12 @@
 # USAGE CHANGES
 
 * Rename exp_info/participants.tsv to exp_info/participants_to_import.tsv
+* Change the default dataset_name to "rawdata" to better comply with the directory structure suggested by BIDS
+
+
+# NEW FEATURES
+
+* Optionally create a "sourcedata" directory with links to the source (DICOM) files
 
 
 # TEST
