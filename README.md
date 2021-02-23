@@ -25,10 +25,24 @@ python3 -m venv venv/
 pip install git+https://github.com/neurospin/neurospin_to_bids.git
 ```
 
+## Developer install
+
+If you want to work on the code of ``neurospin_to_bids``, the following method is recommended:
+
+```shell
+git clone https://github.com/neurospin/neurospin_to_bids.git
+cd neurospin_to_bids
+python3 -m venv venv/
+. venv/bin/activate
+pip install -e .
+```
+
 ## Command-line usage
 
-    neurospin_to_bids --help
-
+```shell
+. path_to_venv/bin/activate  # run once to activate the virtual environment in the current shell
+neurospin_to_bids --help
+```
 
 # Preparation of data
 
