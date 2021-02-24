@@ -203,7 +203,7 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
 
                 # ~ dest_directory = os.path.join(data_path, file_path)
                 # ~ if not os.path.exists(dest_directory):
-                    # ~ os.makedirs(dest_directory)
+                # ~     os.makedirs(dest_directory)
 
                 file_ext = []
                 last = ''
@@ -909,6 +909,7 @@ def main():
                               copy_events=args.copy_events[0],
                               deface=deface,
                               dry_run=args.dry_run[0])
+
 
 if __name__ == "__main__":
     main()
