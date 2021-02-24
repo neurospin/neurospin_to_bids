@@ -178,8 +178,8 @@ def get_bids_path(data_root_path='', subject_id='01', folder='',
                         session_id, folder)
 
 
-def get_bids_file_descriptor(subject_id, task_id=None, session_id=None,
-                             acq_label=None, dir_label=None, rec_id=None, run_id=None,
+def get_bids_file_descriptor(subject_id, task_id=None, session_id=None, fa_id=None, part_label=None,
+                             acq_label=None, echo_id=None, dir_label=None, rec_id=None, run_id=None,
                              run_dir=None, file_tag=None, file_type=None):
     """ Creates a filename descriptor following BIDS.
 
@@ -188,6 +188,9 @@ def get_bids_file_descriptor(subject_id, task_id=None, session_id=None,
     run_id refers to run index
     acq_label refers to acquisition parameters as a label
     rec_id refers to reconstruction parameters as a label
+    part_label refers to magnitude and phase parts of the images
+    echo_id refers to the index of the echo time
+    fa_id refers to the index of the used flip angle
     """
     if 'sub-' or 'sub' in subject_id:
         descriptor = subject_id
@@ -199,6 +202,12 @@ def get_bids_file_descriptor(subject_id, task_id=None, session_id=None,
         descriptor += '_task-{0}'.format(task_id)
     if (acq_label is not None) and (acq_label is not pd.np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
+    if (echo_id is not None) and (echo_id is not pd.np.nan):
+        descriptor += '_echo-{0}'.format(echo_id)
+    if (part_label is not None) and (part_label is not pd.np.nan):
+        descriptor += '_part-{0}'.format(part_label)
+    if (fa_id is not None) and (fa_id is not pd.np.nan):
+        descriptor += '_fa-{0}'.format(fa_id)
     if (dir_label is not None) and (dir_label is not pd.np.nan):
         descriptor += '_dir-{0}'.format(dir_label)
     if (rec_id is not None) and (rec_id is not pd.np.nan):
@@ -459,7 +468,7 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
         acq_date = subject_info['acq_date'].replace('-', '').replace('\n', '')
         
         #acq_label
-        acq_label = subject_info['acq_label']
+        #acq_label = subject_info['acq_label']
 
         #dir_label
         #dir_label = subject_info['dir_label']
@@ -506,6 +515,10 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
             run_task = get_value('task', value[2])
             run_id = get_value('run', value[2])  
             run_dir = get_value('dir', value[2])
+            acq_label = get_value('acq',value[2])
+            echo_id = get_value('echo', value[2])
+            part_label = get_value('part', value[2])
+            fa_id = get_value('fa',value[2])
             run_session = session_id
             
             
@@ -537,6 +550,9 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
                                                     session_id=run_session,
                                                     file_tag=tag,
                                                     acq_label=acq_label,
+                                                    echo_id=echo_id,
+                                                    part_label=part_label,
+                                                    fa_id=fa_id,
                                                     file_type='tif')
                 #output_path = os.path.join(target_path, filename)
                 #print(output_path)
@@ -550,19 +566,19 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
                 #copy the subject emptyroom
                 
             # ANAT and FUNC case    
-            elif (value[1] == 'anat') or (value[1] == 'func') or (value[1] == 'fmap'):
+            elif (value[1] == 'anat') or (value[1] == 'func') or (value[1] == 'fmap') or (value[1]=='dwi'):
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
                 nip_dirs = glob.glob(os.path.join(db_path, str(acq_date), str(nip) + '*'))
                 #print(os.path.join(db_path, str(acq_date), str(nip) + '*'))
                 if len(nip_dirs) < 1:
-                    list_warning.append(f"\n WARNING: No directory found for given NIP {nip} and SESSION {session_id}")
+                    list_warning.append("\n WARNING: No directory found for given NIP {nip} and SESSION {session_id}")
                     #print(message)
                     #download_report.write(message) 
                     download = False
                 elif len(nip_dirs) > 1:
-                    list_warning.append(f"\n  WARNING: Multiple path for given NIP {nip} \
+                    list_warning.append("\n  WARNING: Multiple path for given NIP {nip} \
                             SESSION {session_id} - please \
                             mention the session of the subject for this date, \
                             2 sessions for the same subject the same day are \
@@ -593,6 +609,9 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
                                                         session_id=run_session,
                                                         file_tag=tag,
                                                         acq_label=acq_label,
+                                                        echo_id=echo_id,
+                                                        part_label=part_label,
+                                                        fa_id=fa_id,
                                                         file_type='nii')
                                    
                     if value[1] == 'anat' and deface :
@@ -606,7 +625,7 @@ def bids_acquisition_download(data_root_path='', dataset_name=None,
                     is_file_to_import = os.path.join(os.path.join(os.getcwd(), target_path, filename))
                     
                     if (os.path.isfile( is_file_to_import )):
-                        list_already_imported.append(f" ALREADY IMPORTED: {is_file_to_import}")
+                        list_already_imported.append(" ALREADY IMPORTED: {is_file_to_import}")
                     else :
                         infiles_dcm2nii.append(file_to_convert)
                         
