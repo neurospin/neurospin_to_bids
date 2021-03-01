@@ -280,7 +280,7 @@ def get_bids_file_descriptor(subject_id,
 def get_bids_default_path(data_root_path='', dataset_name=None):
     """Default experiment raw dataset folder name"""
     if dataset_name is None:
-        dataset_name = 'bids_dataset'
+        dataset_name = 'rawdata'
     return (dataset_name, os.path.join(data_root_path, dataset_name))
 
 
@@ -880,7 +880,7 @@ def main():
     parser.add_argument('-dataset_name',
                         type=str,
                         nargs=1,
-                        default=['bids_dataset'],
+                        default=['rawdata'],
                         help='desired name for the dataset')
     parser.add_argument(
         '-copy_events',
