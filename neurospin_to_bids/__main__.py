@@ -823,7 +823,8 @@ def bids_acquisition_download(data_root_path='',
         participants_path = os.path.join(target_root_path, 'participants.tsv')
         df_participant = pd.DataFrame.from_dict(dic_info_participants,
                                                 orient="index")
-        df_participant.to_csv(participants_path, sep='\t')
+        df_participant.index.rename('participant_id', inplace=True)
+        df_participant.to_csv(participants_path, sep='\t', na_rep="n/a")
 
         if dict_descriptors:
             # ~ print(dict_descriptors)
