@@ -795,10 +795,10 @@ def bids_acquisition_download(data_root_path='',
             try:
                 # warning: Isn't that too restrictive?
                 template = pkg_resources.resource_filename(
-                    "neurospin_to_bids",
+                    pkg_resources.Requirement.parse("neurospin_to_bids"),
                     "template_deface/mean_reg2mean.nii.gz")
                 facemask = pkg_resources.resource_filename(
-                    "neurospin_to_bids",
+                    pkg_resources.Requirement.parse("neurospin_to_bids"),
                     "template_deface/facemask.nii.gz")
             except pkg_resources.DistributionNotFound:
                 template = (
@@ -806,6 +806,7 @@ def bids_acquisition_download(data_root_path='',
                     "unicog-dev/bids/template_deface/mean_reg2mean.nii.gz")
                 facemask = ("/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/"
                             "unicog-dev/bids/template_deface/facemask.nii.gz")
+            print(template)
             os.environ['FSLDIR'] = "/i2bm/local/fsl/bin/"
             os.environ['FSLOUTPUTTYPE'] = "NIFTI_PAIR"
             os.environ['PATH'] = os.environ['FSLDIR'] + ":" + os.environ['PATH']
