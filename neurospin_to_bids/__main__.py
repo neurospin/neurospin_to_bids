@@ -401,7 +401,7 @@ def bids_acquisition_download(data_root_path='',
                               dataset_name=None,
                               force_download=False,
                               behav_path='exp_info/recorded_events',
-                              copy_events='n',
+                              copy_events=False,
                               deface=False,
                               dry_run=False):
     """Automatically download files from neurospin server to a BIDS dataset.
@@ -854,7 +854,7 @@ def bids_acquisition_download(data_root_path='',
                         json_file.truncate()
 
         # Copy recorded event files
-        if copy_events == "y":
+        if copy_events:
             bids_copy_events(behav_path, data_root_path, dataset_name)
 
         # Validate paths with BIDSValidator
@@ -889,43 +889,35 @@ def bids_acquisition_download(data_root_path='',
 def main():
     # Parse arguments from console
     parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
-    parser.add_argument('-root_path',
+    parser.add_argument('--root-path', '-root_path',
+                        default='.',
+                        help='directory containing exp_info to download into')
+    parser.add_argument('--dataset-name', '-dataset_name',
                         type=str,
-                        nargs=1,
-                        default=[''],
-                        help='directory containing exp_info to download to')
-    parser.add_argument('-dataset_name',
+                        default='rawdata',
+                        help='name of the directory created in ROOT_PATH')
+    parser.add_argument('--copy-events', '-copy_events',
+                        action='store_true',
+                        help='copy events from a directory with the same '
+                        'structure')
+    parser.add_argument('--neurospin-database', '-neurospin_database',
                         type=str,
-                        nargs=1,
-                        default=['rawdata'],
-                        help='desired name for the dataset')
-    parser.add_argument(
-        '-copy_events',
-        type=str,
-        nargs=1,
-        default=['n'],
-        help='copy events from a directory with the same structure')
-    parser.add_argument('-neurospin_database',
-                        type=str,
-                        nargs=1,
-                        default=['prisma'],
+                        default='prisma',
                         help='neurospin server to download from')
-    parser.add_argument('-dry-run',
-                        type=bool,
-                        nargs=1,
-                        default=[False],
+    parser.add_argument('--dry-run', '-n', '-dry-run',
+                        action='store_true',
                         help='Test without importation of data')
 
     # LOAD CONSOLE ARGUMENTS
     args = parser.parse_args()
     deface = yes_no('\nDo you want deface T1?', default=None)
-    bids_acquisition_download(data_root_path=args.root_path[0],
-                              dataset_name=args.dataset_name[0],
+    bids_acquisition_download(data_root_path=args.root_path,
+                              dataset_name=args.dataset_name,
                               force_download=False,
                               behav_path='exp_info/recorded_events',
-                              copy_events=args.copy_events[0],
+                              copy_events=args.copy_events,
                               deface=deface,
-                              dry_run=args.dry_run[0])
+                              dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
