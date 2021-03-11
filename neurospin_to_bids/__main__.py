@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import argparse
+import collections.abc
 import glob
 import json
 import os
@@ -593,10 +594,15 @@ def bids_acquisition_download(data_root_path='',
         # value[2] : part of ht file_name
         print("Scans for ", subject_info['NIP'])
         print(subject_info['to_import'])
-        seqs_to_retrieve = literal_eval(subject_info['to_import'])
-        # Convert the first element id there is only one sequence, otherwise
+        to_import = subject_info['to_import'].strip()
+        if to_import:
+            seqs_to_retrieve = literal_eval(to_import)
+            assert isinstance(seqs_to_retrieve, collections.abc.Collection)
+        else:
+            seqs_to_retrieve = []
+        # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
-        if isinstance(seqs_to_retrieve[0], str):
+        if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
             seqs_to_retrieve = [seqs_to_retrieve]
 
         # download data, store information in batch files for anat/fmri
