@@ -53,7 +53,7 @@ neurospin_to_bids --help
 You have to store the information about subjects and data to import in a **exp_info** directory. For instance:
 
         ./exp_info
-        ├── participants.tsv
+        ├── participants_to_import.tsv
 
 See several small examples in [test_dataset/](test_dataset/). See also [https://github.com/neurospin/unicog/tree/master/unicogfmri/localizer_pypreprocess/scripts/exp_info](unicog/unicogfmri/localizer_pypreprocess/scripts/exp_info)
 
@@ -64,7 +64,7 @@ The importation of events are also possible if the \*_events.tsv files are corre
 Here is an example:
 
         ./exp_info
-        ├── participants.tsv
+        ├── participants_to_import.tsv
         └── recorded_events
             ├── export_events.py
             ├── sub-01
@@ -84,7 +84,7 @@ When the **exp_info** directory is ready, you can launch the importation:
 
 * The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
     * ``-root_path``: specifies the target folder - by default the current directory.
-    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder `bids_dataset` of the target folder.
+    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder ``rawdata`` of the target folder.
     * ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
 
 If instead we were to specify the target folder (the one containing an
@@ -143,12 +143,12 @@ This script has an implementation of **case 4: Multiple phase encoded directions
 
 ## Files in the `exp_info` folder specifying the data download
 
-Only one file is mandatory in the `exp_info` directory: `participants.tsv`.
-Note that this file is not part of the BIDS standard. It is defined to contain
-the minimum information needed to simplify creating a BIDS dataset with the
-data from the NeuroSpin server.
+Only one file is mandatory in the `exp_info` directory:
+`participants_to_import.tsv`. Note that this file is not part of the BIDS
+standard. It is defined to contain the minimum information needed to simplify
+creating a BIDS dataset with the data from the NeuroSpin server.
 
-### Participants.tsv
+### participants_to_import.tsv
 
 Contains information about the participants and their acquisitions.
 When there are multiple sessions per subject (with different acquisition
@@ -168,7 +168,7 @@ the BIDS dataset before publication.
 The _participant_label_ and _session_label_ are taken from this file to
 create the folders and file names in the BIDS dataset, every other column
 will be added to a new `participants.tsv` file included under the
-`bids_dataset` top folder.
+`rawdata` top folder.
 
 #### User case with 2 sessions the same day with the same participant
 For instance, if a participant undergoes an examination in the morning and in the afternoon, 
@@ -177,7 +177,7 @@ is labelled as follow : '<nip>-<exman-number>-<automatic-number>'
 The examen number is automatically incremented for each new examination. Don't mange about
 the automatic number. 
 
-Here is an example for the `participants.tsv` file:
+Here is an example for the `participants_to_import.tsv` file:
 
 
         participant_id  NIP             infos_participant               session_label   acq_date	acq_label        location        to_import
@@ -186,7 +186,7 @@ Here is an example for the `participants.tsv` file:
 
 #### User case for fmap importation (Multiple phase encoded directions)
 
-Here is an example for the `participants.tsv` file:
+Here is an example for the `participants_to_import.tsv` file:
 
 
         participant_id  NIP             infos_participant               session_label   acq_date	acq_label        location        to_import
@@ -229,7 +229,7 @@ Please see [https://github.com/poldracklab/pydeface](https://github.com/poldrack
 
 # Summary of importation
 ## Files imported and warnings
-A summary will be displayed at the end of importation into the terminal. The summary is also saved into ``./report/download_report_*.csv`` file. This file is not in the bids_dataset repository because it is not part of BIDS.
+A summary will be displayed at the end of importation into the terminal. The summary is also saved into ``./report/download_report_*.csv`` file. This file is not in the `rawdata` repository because it is not part of BIDS.
 
 ## BIDS validation
 If you are selected the bids validation option, the summary is saved in ``./report/report_bids_validation.txt`` .

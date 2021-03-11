@@ -417,30 +417,40 @@ def bids_acquisition_download(data_root_path='',
     in the folder 'exp_info'.
 
     NIP and acq date of the subjects will be taken automatically from
-    exp_info/participants.tsv file that follows bids standard. The file will
-    be copied in the dataset folder without the NIP column for privacy.
+    exp_info/participants_to_import.tsv file that follows bids standard. The
+    file will be copied in the dataset folder without the NIP column for
+    privacy.
 
-    Posible exceptions
+    Possible exceptions
     1) exp_info directory not found
-    2) participants.tsv not found
+    2) participants_to_import.tsv not found
     3) download files not found
     4) Acquisition directory in neurospin server not found
     5) There is more than one acquisition directory (Have to ask manip for
     extra digits for NIP, the NIP then would look like xxxxxxxx-ssss)
     6) Event file corresponding to downloaded bold.nii not found
+
     """
 
     ####################################
     # CHECK PATHS AND FILES
     ####################################
 
-    # exp_info path where is the participants.tsv
+    # exp_info path where is the participants_to_import.tsv
     # ~ print(data_root_path)
     exp_info_path = os.path.join(data_root_path, 'exp_info')
     if not os.path.exists(exp_info_path):
         raise Exception('exp_info directory not found')
-    if not os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
-        raise Exception('exp_info/participants.tsv not found')
+    if os.path.isfile(os.path.join(exp_info_path,
+                                   'participants_to_import.tsv')):
+        participants_to_import = os.path.join(exp_info_path,
+                                              'participants_to_import.tsv')
+    elif os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
+        # Legacy name of participants_to_import.tsv
+        participants_to_import = os.path.join(exp_info_path,
+                                              'participants.tsv')
+    else:
+        raise Exception('exp_info/participants_to_import.tsv not found')
 
     # Determine target path with the name of dataset
     dataset_name, target_root_path = get_bids_default_path(
@@ -486,8 +496,9 @@ def bids_acquisition_download(data_root_path='',
     # one line has the following information
     # participant_id / NIP / infos_participant / session_label / acq_date / location / to_import
 
-    # Read the participants.tsv file for getting subjects/sessions to download
-    pop = pd.read_csv(os.path.join(exp_info_path, 'participants.tsv'),
+    # Read the participants_to_import.tsv file for getting subjects/sessions to
+    # download
+    pop = pd.read_csv(participants_to_import,
                       dtype=str,
                       sep='\t',
                       na_filter=False,
@@ -496,7 +507,7 @@ def bids_acquisition_download(data_root_path='',
     # ~ print(df_participant)
 
     for row_idx, subject_info in pop.iterrows():
-        # Fill the partcipant information for the participants.tsv
+        # Fill the partcipant information for the participants_to_import.tsv
         if subject_info['infos_participant'].strip():
             info_participant = json.loads(
                 subject_info['infos_participant'].strip())
