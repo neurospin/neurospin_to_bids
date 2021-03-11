@@ -508,27 +508,27 @@ def bids_acquisition_download(data_root_path='',
     # ~ print(df_participant)
 
     for row_idx, subject_info in pop.iterrows():
+        # the row_idx for giving either participant_label or participant_id
+        subject_id = subject_info[0].strip()
+
         # Fill the partcipant information for the participants_to_import.tsv
         if subject_info['infos_participant'].strip():
             info_participant = json.loads(
                 subject_info['infos_participant'].strip())
         else:
             info_participant = {}
-        if subject_info[0] in dic_info_participants:
-            existing_items = dic_info_participants[subject_info[0]]
+        if subject_id in dic_info_participants:
+            existing_items = dic_info_participants[subject_id]
             # Existing items take precedence over new values
             info_participant.update(existing_items)
-        dic_info_participants[subject_info[0]] = info_participant
+        dic_info_participants[subject_id] = info_participant
 
         # Determine path to files in NeuroSpin server
-        download_database = subject_info['location']
+        download_database = subject_info['location'].strip()
         if download_database in NEUROSPIN_DATABASES:
             db_path = NEUROSPIN_DATABASES[download_database]
         else:
             db_path = download_database
-
-        # the row_idx for giving either participant_label or participant_id
-        subject_id = subject_info[0]
 
         # sub_path = target_root_path + subject_id + ses_path
         # Mange the optional filters
@@ -536,8 +536,8 @@ def bids_acquisition_download(data_root_path='',
         # if session_id is not None:
         #  optional_filters += [('ses', session_id)]
         if 'session_label' in subject_info.index:
-            if subject_info['session_label'] is not pd.np.nan:
-                session_id = subject_info['session_label']
+            if subject_info['session_label'].strip():
+                session_id = subject_info['session_label'].strip()
             else:
                 session_id = None
         if session_id is None:
@@ -566,16 +566,16 @@ def bids_acquisition_download(data_root_path='',
 
         # DATE has to be transformed from BIDS to NeuroSpin server standard
         # NeuroSpin standard is yyyymmdd -> Bids standard is YYYY-MM-DD
-        acq_date = subject_info['acq_date'].replace('-', '').replace('\n', '')
+        acq_date = subject_info['acq_date'].strip().replace('-', '')
 
         # acq_label
-        acq_label = subject_info['acq_label']
+        acq_label = subject_info['acq_label'].strip()
 
         # dir_label
-        # ~ dir_label = subject_info['dir_label']
+        # ~ dir_label = subject_info['dir_label'].strip()
 
         # nip number
-        nip = subject_info['NIP']
+        nip = subject_info['NIP'].strip()
 
         # Get appropriate download file. As specific as possible
         # ~ specs_path = file_manager_default_file(exp_info_path,
@@ -592,14 +592,14 @@ def bids_acquisition_download(data_root_path='',
         # value[0] : num of seq
         # value[1] : modality
         # value[2] : part of ht file_name
-        print("Scans for ", subject_info['NIP'])
-        print(subject_info['to_import'])
         to_import = subject_info['to_import'].strip()
         if to_import:
             seqs_to_retrieve = literal_eval(to_import)
             assert isinstance(seqs_to_retrieve, collections.abc.Collection)
         else:
             seqs_to_retrieve = []
+        print("Scans for ", nip)
+        print(json.dumps(to_import))
         # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
         if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
