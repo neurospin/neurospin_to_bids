@@ -490,25 +490,23 @@ def bids_acquisition_download(data_root_path='',
     pop = pd.read_csv(os.path.join(exp_info_path, 'participants.tsv'),
                       dtype=str,
                       sep='\t',
+                      na_filter=False,
                       index_col=False)
 
     # ~ print(df_participant)
 
     for row_idx, subject_info in pop.iterrows():
         # Fill the partcipant information for the participants.tsv
+        if subject_info['infos_participant'].strip():
+            info_participant = json.loads(
+                subject_info['infos_participant'].strip())
+        else:
+            info_participant = {}
         if subject_info[0] in dic_info_participants:
             existing_items = dic_info_participants[subject_info[0]]
-            dico_add = {}
-            info_participant = json.loads(subject_info['infos_participant'])
-            for k, v in info_participant.items():
-                if k not in existing_items:
-                    dico_add[k] = v
-            # fusion dicos
-            existing_items.update(dico_add)
-            dic_info_participants[subject_info[0]] = existing_items
-        else:
-            dic_info_participants[subject_info[0]] = json.loads(
-                subject_info['infos_participant'])
+            # Existing items take precedence over new values
+            info_participant.update(existing_items)
+        dic_info_participants[subject_info[0]] = info_participant
 
         # Determine path to files in NeuroSpin server
         download_database = subject_info['location']
