@@ -796,10 +796,10 @@ def bids_acquisition_download(data_root_path='',
                 # warning: Isn't that too restrictive?
                 template = pkg_resources.resource_filename(
                     pkg_resources.Requirement.parse("neurospin_to_bids"),
-                    "template_deface/mean_reg2mean.nii.gz")
+                    "neurospin_to_bids/template_deface/mean_reg2mean.nii.gz")
                 facemask = pkg_resources.resource_filename(
                     pkg_resources.Requirement.parse("neurospin_to_bids"),
-                    "template_deface/facemask.nii.gz")
+                    "neurospin_to_bids/template_deface/facemask.nii.gz")
             except pkg_resources.DistributionNotFound:
                 template = (
                     "/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/"
