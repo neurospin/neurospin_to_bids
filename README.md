@@ -34,7 +34,9 @@ git clone https://github.com/neurospin/neurospin_to_bids.git
 cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
-pip install -e .
+pip install -e .[dev]
+
+pytest  # run tests
 ```
 
 ## Command-line usage
