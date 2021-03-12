@@ -1,0 +1,5 @@
+# Ensure compatibility with the production environment
+-c production.txt
+
+# Add packages that are used for testing
+pytest

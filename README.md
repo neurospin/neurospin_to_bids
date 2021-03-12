@@ -14,16 +14,12 @@ This script imports data, but can also:
 
 # Installation and usage
 
-## One-off installation with pip
+## NeuroSpin installation
 
-The easiest way to install the latest version of neurospin_to_bids is
-by using ``pip``. Using a virtual environment is recommended:
+The ``neurospin_to_bids`` command is available on NeuroSpin workstations, where
+it is installed under ``/neurospin/local`` and updated nightly to the latest
+version.
 
-```shell
-python3 -m venv venv/
-. venv/bin/activate
-pip install git+https://github.com/neurospin/neurospin_to_bids.git
-```
 
 ## Developer install
 
@@ -31,20 +27,27 @@ If you want to work on the code of ``neurospin_to_bids``, the following method i
 
 ```shell
 git clone https://github.com/neurospin/neurospin_to_bids.git
+
+# Installation in a virtual environment
 cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
-pip install -e .[dev]
+pip install -c requirements/production.txt -c requirements/test.txt -e .[dev]
 
-pytest  # run tests
+# Tests. Always confirm that they succeed before committing. Please.
+pytest  # run tests in the current environment
+
+# Run tests in an isolated environment that closely approximates production
+tox
+
+# Other commands useful for development
+check-manifest  # check that all necessary files are installed by pip
+./requirements/update.sh  # upgrade pinned dependency versions
+
+# Ensure that only packages pinned for production are installed
+pip-sync requirements/production.txt
 ```
 
-## Command-line usage
-
-```shell
-. path_to_venv/bin/activate  # run once to activate the virtual environment in the current shell
-neurospin_to_bids --help
-```
 
 # Preparation of data
 

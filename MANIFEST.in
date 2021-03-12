@@ -1,3 +1,10 @@
 exclude todo.txt
-graft neurospin_to_bids/template_deface
 prune test_dataset
+
+graft neurospin_to_bids/template_deface
+
+recursive-include tests *.py
+include tox.ini
+recursive-include requirements *.in
+recursive-include requirements *.sh
+recursive-include requirements *.txt
