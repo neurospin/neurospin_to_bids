@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from ast import literal_eval
 from collections import OrderedDict
@@ -887,6 +888,8 @@ def bids_acquisition_download(data_root_path='',
 
 
 def main():
+    if sys.version_info < (3, 6):
+        sys.exit("error: neurospin_to_bids needs Python 3.6 or later")
     # Parse arguments from console
     parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
     parser.add_argument('--root-path', '-root_path',
