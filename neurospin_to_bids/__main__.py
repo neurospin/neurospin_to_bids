@@ -1,5 +1,22 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+"""
+Created on Wed Feb 24 2021
 
+"""
+#to execute after Pre-processing_participants_to_import_filler.py
+#as it will use the participants_to_import_updated that it generated
+#pre requisite : have the updated tsv, have this code in a folder containing the exp_info folder with the tsv
+
+#if the terminal was changed / closed :
+#. ~/Desktop/neurospin_to_bids/venv/bin/activate
+#cd <path_where_is_exp_info>
+
+#python neurospin_to_bids_participants_to_import_updated.py
+#No (n) deface
+#Yes (y) json
+#only enter for the other questions
+
+import numpy as np
 import argparse
 import glob
 import json
@@ -258,19 +275,19 @@ def get_bids_file_descriptor(subject_id,
         descriptor = subject_id
     else:
         descriptor = 'sub-{0}'.format(subject_id)
-    if (session_id is not None) and (session_id is not pd.np.nan):
+    if (session_id is not None) and (session_id is not np.nan):
         descriptor += '_ses-{0}'.format(session_id)
-    if (task_id is not None) and (task_id is not pd.np.nan):
+    if (task_id is not None) and (task_id is not np.nan):
         descriptor += '_task-{0}'.format(task_id)
-    if (acq_label is not None) and (acq_label is not pd.np.nan):
+    if (acq_label is not None) and (acq_label is not np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
-    if (dir_label is not None) and (dir_label is not pd.np.nan):
+    if (dir_label is not None) and (dir_label is not np.nan):
         descriptor += '_dir-{0}'.format(dir_label)
-    if (rec_id is not None) and (rec_id is not pd.np.nan):
+    if (rec_id is not None) and (rec_id is not np.nan):
         descriptor += '_rec-{0}'.format(rec_id)
-    if (run_dir is not None) and (run_dir is not pd.np.nan):
+    if (run_dir is not None) and (run_dir is not np.nan):
         descriptor += '_dir-{0}'.format(run_dir)
-    if (run_id is not None) and (run_id is not pd.np.nan):
+    if (run_id is not None) and (run_id is not np.nan):
         descriptor += '_run-{0}'.format(run_id)
     if (file_tag is not None) and (file_type is not None):
         descriptor += '_{0}.{1}'.format(file_tag, file_type)
@@ -439,8 +456,8 @@ def bids_acquisition_download(data_root_path='',
     exp_info_path = os.path.join(data_root_path, 'exp_info')
     if not os.path.exists(exp_info_path):
         raise Exception('exp_info directory not found')
-    if not os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
-        raise Exception('exp_info/participants.tsv not found')
+    if not os.path.isfile(os.path.join(exp_info_path, 'participants_to_import_updated.tsv')):
+        raise Exception('exp_info/participants_to_import_updated.tsv not found')
 
     # Determine target path with the name of dataset
     dataset_name, target_root_path = get_bids_default_path(
@@ -487,7 +504,7 @@ def bids_acquisition_download(data_root_path='',
     # participant_id / NIP / infos_participant / session_label / acq_date / location / to_import
 
     # Read the participants.tsv file for getting subjects/sessions to download
-    pop = pd.read_csv(os.path.join(exp_info_path, 'participants.tsv'),
+    pop = pd.read_csv(os.path.join(exp_info_path, 'participants_to_import_updated.tsv'),
                       dtype=str,
                       sep='\t',
                       index_col=False)
@@ -559,7 +576,7 @@ def bids_acquisition_download(data_root_path='',
         acq_date = subject_info['acq_date'].replace('-', '').replace('\n', '')
 
         # acq_label
-        acq_label = subject_info['acq_label']
+        acq_label2 = subject_info['acq_label']
 
         # dir_label
         # ~ dir_label = subject_info['dir_label']
@@ -600,7 +617,7 @@ def bids_acquisition_download(data_root_path='',
                     return m.group(1)
                 else:
                     return None
-
+            
             run_task = get_value('task', value[2])
             acq_label = get_value('acq', value[2])
             run_id = get_value('run', value[2])
