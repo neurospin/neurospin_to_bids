@@ -309,7 +309,7 @@ def bids_init_dataset(data_root_path='',
 
     """
 
-    # CHECK DATASET RESPOSITORY
+    # CHECK DATASET REPOSITORY
     dataset_name, dataset_name_path = get_bids_default_path(
         data_root_path, dataset_name)
     if not os.path.exists(dataset_name_path):
@@ -321,7 +321,7 @@ def bids_init_dataset(data_root_path='',
     overwrite_datadesc_file = True
     if description_file:
         overwrite_datadesc_file = yes_no(
-            '\nA dataset_description.json is already exising, do you want to overwrite?',
+            '\nA dataset_description.json is already existing, do you want to overwrite?',
             default="yes")
     if overwrite_datadesc_file or not description_file:
         data_descrip = yes_no(
@@ -413,7 +413,7 @@ def bids_acquisition_download(data_root_path='',
     Trio db_path = '/neurospin/acquisition/database/TrioTim'
 
     The bids dataset is created if necessary before download with some
-    empy mandatory files to be filled like README in case they dont exist.
+    empty mandatory files to be filled like README in case they don't exist.
 
     The download depends on the file '[sub-*_][ses-*_]download.csv' contained
     in the folder 'exp_info'.

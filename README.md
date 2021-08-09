@@ -222,7 +222,7 @@ Here is an example of `sub-*_<task>_events.tsv` following the BIDS standard:
         11.4    1          r_hand_audio
         15.0    1          sentence_audio
 
-the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject anonimity. See the [BIDS specification](https://bids.neuroimaging.io/).
+the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject anonymity. See the [BIDS specification](https://bids.neuroimaging.io/).
 
 
 # Deface

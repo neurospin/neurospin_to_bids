@@ -25,7 +25,7 @@
 # FUNCTIONS
 
 * function to check a field into json file, e.g. Repetition Time
-* function to chech unity ms
+* function to check unity ms
 * function to import onset .... information
 * function for updating the intended for field in fmap json file
 
