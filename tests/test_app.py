@@ -1,6 +1,7 @@
 import distutils.spawn
 import subprocess
 
+
 def test_app_help():
     exe = distutils.spawn.find_executable('neurospin_to_bids')
     assert exe is not None
