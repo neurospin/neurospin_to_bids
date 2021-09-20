@@ -568,12 +568,6 @@ def bids_acquisition_download(data_root_path='',
         # NeuroSpin standard is yyyymmdd -> Bids standard is YYYY-MM-DD
         acq_date = subject_info['acq_date'].strip().replace('-', '')
 
-        # acq_label
-        acq_label = subject_info['acq_label'].strip()
-
-        # dir_label
-        # ~ dir_label = subject_info['dir_label'].strip()
-
         # nip number
         nip = subject_info['NIP'].strip()
 
