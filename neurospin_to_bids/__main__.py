@@ -461,9 +461,9 @@ def bids_acquisition_download(data_root_path='',
     bids_init_dataset(data_root_path, dataset_name)
 
     # Manage the report and download information
-    download_report = ('download_report_' +
-                       time.strftime("%d-%b-%Y-%H:%M:%S", time.gmtime()) +
-                       '.csv')
+    download_report = ('download_report_'
+                       + time.strftime("%d-%b-%Y-%H:%M:%S", time.gmtime())
+                       + '.csv')
     report_path = os.path.join(data_root_path, 'report')
     if not os.path.exists(report_path):
         os.makedirs(report_path)
@@ -689,8 +689,8 @@ def bids_acquisition_download(data_root_path='',
                     dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
-                    list_warning.append("\n WARNING: file not found " +
-                                        path_file_glob)
+                    list_warning.append("\n WARNING: file not found "
+                                        + path_file_glob)
                     # ~ print(message)
                     # ~ download_report.write(message)
                 elif download:
