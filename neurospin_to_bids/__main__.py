@@ -743,14 +743,6 @@ def bids_acquisition_download(data_root_path='',
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
-        # Importation and conversion of dicom files
-        dcm2nii_batch = dict(Options=dict(isGz='false',
-                                          isFlipY='false',
-                                          isVerbose='false',
-                                          isCreateBIDS='true',
-                                          isOnlySingleFile='false'),
-                             Files=infiles_dcm2nii)
-
     print(
         "\n------------------------------------------------------------------------------------"
     )
