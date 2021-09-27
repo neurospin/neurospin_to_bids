@@ -99,3 +99,7 @@ traits==6.2.0
     # via nipype
 urllib3==1.26.3
     # via requests
+
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==58.1.0
+    # via neurospin_to_bids (setup.py)
