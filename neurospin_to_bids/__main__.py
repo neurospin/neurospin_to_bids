@@ -94,7 +94,7 @@ def file_manager_default_file(main_path,
     [key-value_]...[key-value_]file_tag.file_type.
     """
     filters = []
-    for n in list(reversed(range(1, len(filter_list) + 1))):
+    for n in reversed(range(1, len(filter_list) + 1)):
         filters += combinations(filter_list, n)
     filters += [[]]
     for filt in filters:
