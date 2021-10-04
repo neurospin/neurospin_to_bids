@@ -194,7 +194,7 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
     # raise warning if no folder is found in recorded events
     if not sub_folders:
         print(
-            f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: NO EVENTS FILE{Bcolors.ENDC}'
+            f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE{Bcolors.ENDC}'
         )
     else:
         for sub_folder in sub_folders:
@@ -320,7 +320,7 @@ def bids_init_dataset(data_root_path='',
     overwrite_datadesc_file = True
     if description_file:
         overwrite_datadesc_file = yes_no(
-            '\nA dataset_description.json is already existing, do you want to overwrite?',
+            '\nA dataset_description.json already exists, do you want to overwrite?',
             default="yes")
     if overwrite_datadesc_file or not description_file:
         data_descrip = yes_no(
@@ -362,14 +362,14 @@ def bids_init_dataset(data_root_path='',
 
     # CHECK CHANGES FILE / TEXT FILE CPAN CONVENTION
     changes_file = os.path.join(dataset_name_path, 'CHANGES')
-    changes_file_exist = os.path.exists(changes_file)
+    changes_file_exists = os.path.exists(changes_file)
     overwrite_changes_file = True
-    if changes_file_exist:
+    if changes_file_exists:
         overwrite_changes_file = yes_no(
-            '\nA CHANGES file is already existing, do you want to overwrite?',
+            '\nA CHANGES file already exists, do you want to overwrite?',
             default="yes")
 
-    if overwrite_changes_file or not changes_file_exist:
+    if overwrite_changes_file or not changes_file_exists:
         changes = yes_no('\nDo you want to create/overwrite the CHANGES file?',
                          default="yes")
         if changes:
@@ -383,7 +383,7 @@ def bids_init_dataset(data_root_path='',
     overwrite_readme_file = True
     if readme_file_exist:
         overwrite_readme_file = yes_no(
-            '\nA README file is already existing, do you want to overwrite?',
+            '\nA README file already exists, do you want to overwrite?',
             default="yes")
 
     if overwrite_readme_file or not readme_file_exist:
