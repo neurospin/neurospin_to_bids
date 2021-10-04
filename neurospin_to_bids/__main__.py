@@ -297,7 +297,7 @@ def bids_init_dataset(data_root_path='',
     according to the standard. Particularly those that should be filled
     manually like README files.
 
-    dataset_description.json : interactif mode to fill in. Or laer on if the
+    dataset_description.json : interactif mode to fill in. Or later on if the
     user wants. By default :
     Name: dataset_name
     BidsVersion: 1.0.0
