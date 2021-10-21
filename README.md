@@ -187,7 +187,7 @@ Here is an example for the `participants_to_import.tsv` file:
 
         participant_id  NIP             infos_participant               session_label   acq_date	acq_label        location        to_import
         sub-01          tt989898_6405   {"sex":"F", "age":"45"}         01              2010-06-28	      trio            [['2','anat','T1w'],['9','func','task-loc_std_run-01_bold']]
-        sub-01          tt989898_6405                                	02 		        2010-06-28	      trio            [['9','func','task-loc_std_bold']]
+        sub-01          tt989898_6406                                	02 		        2010-06-28	      trio            [['9','func','task-loc_std_bold']]
 
 #### User case for fmap importation (Multiple phase encoded directions)
 

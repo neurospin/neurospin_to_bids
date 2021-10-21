@@ -17,6 +17,7 @@ from pathlib import Path
 
 import mne
 import pandas as pd
+import yaml
 import pydeface.utils as pdu
 from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
@@ -743,6 +744,19 @@ def bids_acquisition_download(data_root_path='',
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
+
+        # Importation and conversion of dicom files
+        dcm2nii_batch = dict(Options=dict(isGz='false',
+                                          isFlipY='false',
+                                          isVerbose='false',
+                                          isCreateBIDS='true',
+                                          isOnlySingleFile='false'),
+                             Files=infiles_dcm2nii)
+
+    dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
+    with open(dcm2nii_batch_file, 'w') as f:
+        data = yaml.dump(dcm2nii_batch, f)
+
     print(
         "\n------------------------------------------------------------------------------------"
     )
@@ -779,7 +793,7 @@ def bids_acquisition_download(data_root_path='',
         print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
     else:
         print('\n')
-        dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
+        #dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
         cmd = "dcm2niibatch %s" % (dcm2nii_batch_file)
         subprocess.call(cmd, shell=True)
 
