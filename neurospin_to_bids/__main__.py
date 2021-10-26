@@ -657,8 +657,7 @@ def bids_acquisition_download(data_root_path='',
 
             # ANAT and FUNC case
             # todo: bad practices, to refactor for the sake of simplicity
-            elif (value[1] == 'anat') or (value[1] == 'func') or (
-                    value[1] == 'dwi') or (value[1] == 'fmap'):
+            elif value[1] in ('anat', 'func', 'dwi', 'fmap'):
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
