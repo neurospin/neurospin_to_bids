@@ -587,7 +587,8 @@ def bids_acquisition_download(data_root_path='',
         to_import = subject_info['to_import'].strip()
         if to_import:
             seqs_to_retrieve = literal_eval(to_import)
-            assert isinstance(seqs_to_retrieve, collections.abc.Collection)
+            if not isinstance(seqs_to_retrieve, collections.abc.Collection):
+                raise TypeError("seqs_to_retrieve must be a Collection")
         else:
             seqs_to_retrieve = []
         print("Scans for ", nip)
