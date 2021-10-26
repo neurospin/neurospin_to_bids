@@ -744,7 +744,6 @@ def bids_acquisition_download(data_root_path='',
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
-
         # Importation and conversion of dicom files
         dcm2nii_batch = dict(Options=dict(isGz='false',
                                           isFlipY='false',
@@ -793,7 +792,6 @@ def bids_acquisition_download(data_root_path='',
         print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
     else:
         print('\n')
-        #dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
         cmd = "dcm2niibatch %s" % (dcm2nii_batch_file)
         subprocess.call(cmd, shell=True)
 
