@@ -755,7 +755,7 @@ def bids_acquisition_download(data_root_path='',
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
-        data = yaml.dump(dcm2nii_batch, f)
+        unused = yaml.dump(dcm2nii_batch, f)
 
     print(
         "\n------------------------------------------------------------------------------------"
