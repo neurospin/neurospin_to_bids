@@ -526,10 +526,7 @@ def bids_acquisition_download(data_root_path='',
 
         # Determine path to files in NeuroSpin server
         download_database = subject_info['location'].strip()
-        if download_database in NEUROSPIN_DATABASES:
-            db_path = NEUROSPIN_DATABASES[download_database]
-        else:
-            db_path = download_database
+        db_path = NEUROSPIN_DATABASES.get(download_database, download_database)
 
         # sub_path = target_root_path + subject_id + ses_path
         # Mange the optional filters
