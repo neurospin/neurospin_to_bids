@@ -133,7 +133,7 @@ def get_bids_files(main_path,
                    file_type='*',
                    sub_id='*',
                    file_folder='*',
-                   filters=[],
+                   filters=None,
                    ref=False,
                    sub_folder=True,
                    allow_other_fields=True):
