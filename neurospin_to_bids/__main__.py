@@ -508,8 +508,8 @@ def bids_acquisition_download(data_root_path='',
 
     # ~ print(df_participant)
 
-    for row_idx, subject_info in pop.iterrows():
-        # the row_idx for giving either participant_label or participant_id
+    for _unused_index, subject_info in pop.iterrows():
+        # the row index for giving either participant_label or participant_id
         subject_id = subject_info[0].strip()
 
         # Fill the partcipant information for the participants_to_import.tsv
@@ -750,7 +750,7 @@ def bids_acquisition_download(data_root_path='',
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
-        unused = yaml.dump(dcm2nii_batch, f)
+        _unused_data = yaml.dump(dcm2nii_batch, f)
 
     print(
         "\n------------------------------------------------------------------------------------"
