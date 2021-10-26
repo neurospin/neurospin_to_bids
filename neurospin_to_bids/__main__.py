@@ -288,7 +288,7 @@ def get_bids_default_path(data_root_path='', dataset_name=None):
 
 def bids_init_dataset(data_root_path='',
                       dataset_name=None,
-                      dataset_description=dict(),
+                      dataset_description={},
                       readme='',
                       changes=''):
     """Create directories and files missing to follow bids.
