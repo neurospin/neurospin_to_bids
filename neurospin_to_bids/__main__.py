@@ -509,7 +509,6 @@ def bids_acquisition_download(data_root_path='',
     # ~ print(df_participant)
 
     for _unused_index, subject_info in pop.iterrows():
-        # the row index for giving either participant_label or participant_id
         subject_id = subject_info[0].strip()
 
         # Fill the partcipant information for the participants_to_import.tsv
