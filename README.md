@@ -222,11 +222,11 @@ Here is an example of `sub-*_<task>_events.tsv` following the BIDS standard:
         11.4    1          r_hand_audio
         15.0    1          sentence_audio
 
-the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject anonymity. See the [BIDS specification](https://bids.neuroimaging.io/).
+the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in seconds. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject privacy. See the [BIDS specification](https://bids.neuroimaging.io/).
 
 
 # Deface
-If you want to import data and share them with other laboratories or on an open server, you have to anonymize them. For that, the bids importation remove all fields in the header containing specific
+If you want to import data and share them with other laboratories or on an open server, you have to de-identify them. For that, the bids importation remove all fields in the header containing specific
 information such as "Patient's name" and the script of importation will propose to deface anatomical data. The pydeface python is used to propose this step.
 If you need to deface, ensure that pydeface is installed on your workstation.
 
