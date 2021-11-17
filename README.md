@@ -33,7 +33,10 @@ cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
 pip install -c requirements/production.txt -c requirements/test.txt -e .[dev]
+```
 
+Other commands that are useful for developers:
+```
 # Tests. Always confirm that they succeed before committing. Please.
 pytest  # run tests in the current environment
 
@@ -45,6 +48,7 @@ check-manifest  # check that all necessary files are installed by pip
 ./requirements/update.sh  # upgrade pinned dependency versions
 
 # Ensure that only packages pinned for production are installed
+# (beware that you will need to reinstall neuroglancer-scripts afterwards)
 pip-sync requirements/production.txt
 ```
 
