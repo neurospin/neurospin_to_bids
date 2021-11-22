@@ -74,12 +74,11 @@ def yes_no(question: str, default: str = None) -> bool:
 
     while True:
         choice = input(question + prompt).lower()
-        if default is not None and choice == '':
+        if choice == '' and default is not None:
             return valid[default]
-        elif choice in valid:
+        if choice in valid:
             return valid[choice]
-        else:
-            print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+        print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
 
 
 def file_manager_default_file(main_path,
