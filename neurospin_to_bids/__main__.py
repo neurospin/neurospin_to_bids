@@ -788,8 +788,8 @@ def bids_acquisition_download(data_root_path='',
         print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
     else:
         print('\n')
-        cmd = "dcm2niibatch %s" % (dcm2nii_batch_file)
-        subprocess.call(cmd, shell=True)
+        cmd = ("dcm2niibatch", dcm2nii_batch_file)
+        subprocess.call(cmd)
 
         # loop for checking if downloaded are ok and create the downloaded files
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
