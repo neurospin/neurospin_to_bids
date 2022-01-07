@@ -244,6 +244,9 @@ def get_bids_file_descriptor(subject_id,
                              acq_label=None,
                              dir_label=None,
                              rec_id=None,
+                             fa_id=None,
+                             part_label=None,
+                             echo_label=None,
                              run_id=None,
                              run_dir=None,
                              file_tag=None,
@@ -255,6 +258,9 @@ def get_bids_file_descriptor(subject_id,
     run_id refers to run index
     acq_label refers to acquisition parameters as a label
     rec_id refers to reconstruction parameters as a label
+    part_label refers to magnitude and phase parts of the images
+    echo_id refers to the index of the echo time
+    fa_id refers to the index of the used flip angle
     """
     if 'sub-' or 'sub' in subject_id:
         descriptor = subject_id
@@ -266,6 +272,12 @@ def get_bids_file_descriptor(subject_id,
         descriptor += '_task-{0}'.format(task_id)
     if (acq_label is not None) and (acq_label is not np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
+    if (echo_id is not None) and (echo_id is not np.nan):
+        descriptor += '_echo-{0}'.format(echo_id)
+    if (part_label is not None) and (part_label is not np.nan):
+        descriptor += '_part-{0}'.format(part_label)
+    if (fa_id is not None) and (fa_id is not np.nan):
+        descriptor += '_fa-{0}'.format(fa_id)
     if (dir_label is not None) and (dir_label is not np.nan):
         descriptor += '_dir-{0}'.format(dir_label)
     if (rec_id is not None) and (rec_id is not np.nan):
@@ -612,6 +624,10 @@ def bids_acquisition_download(data_root_path='',
             acq_label = get_value('acq', value[2])
             run_id = get_value('run', value[2])
             run_dir = get_value('dir', value[2])
+            acq_label = get_value('acq',value[2])
+            echo_id = get_value('echo', value[2])
+            part_label = get_value('part', value[2])
+            fa_id = get_value('fa',value[2])
             run_session = session_id
 
             tag = value[2].split('_')[-1]
@@ -641,6 +657,9 @@ def bids_acquisition_download(data_root_path='',
                                                     session_id=run_session,
                                                     file_tag=tag,
                                                     acq_label=acq_label,
+                                                    echo_id=echo_id,
+                                                    part_label=part_label,
+                                                    fa_id=fa_id,
                                                     file_type='tif')
                 # ~ output_path = os.path.join(target_path, filename)
                 # ~ print(output_path)
@@ -703,6 +722,9 @@ def bids_acquisition_download(data_root_path='',
                                                         session_id=run_session,
                                                         file_tag=tag,
                                                         acq_label=acq_label,
+                                                        echo_id=echo_id,
+                                                        part_label=part_label,
+                                                        fa_id=fa_id,
                                                         file_type='nii')
 
                     if value[1] == 'anat' and deface:
