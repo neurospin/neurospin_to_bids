@@ -16,6 +16,7 @@ from itertools import combinations
 from pathlib import Path
 
 import mne
+import numpy as np
 import pandas as pd
 import yaml
 import pydeface.utils as pdu
@@ -259,19 +260,19 @@ def get_bids_file_descriptor(subject_id,
         descriptor = subject_id
     else:
         descriptor = 'sub-{0}'.format(subject_id)
-    if (session_id is not None) and (session_id is not pd.np.nan):
+    if (session_id is not None) and (session_id is not np.nan):
         descriptor += '_ses-{0}'.format(session_id)
-    if (task_id is not None) and (task_id is not pd.np.nan):
+    if (task_id is not None) and (task_id is not np.nan):
         descriptor += '_task-{0}'.format(task_id)
-    if (acq_label is not None) and (acq_label is not pd.np.nan):
+    if (acq_label is not None) and (acq_label is not np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
-    if (dir_label is not None) and (dir_label is not pd.np.nan):
+    if (dir_label is not None) and (dir_label is not np.nan):
         descriptor += '_dir-{0}'.format(dir_label)
-    if (rec_id is not None) and (rec_id is not pd.np.nan):
+    if (rec_id is not None) and (rec_id is not np.nan):
         descriptor += '_rec-{0}'.format(rec_id)
-    if (run_dir is not None) and (run_dir is not pd.np.nan):
+    if (run_dir is not None) and (run_dir is not np.nan):
         descriptor += '_dir-{0}'.format(run_dir)
-    if (run_id is not None) and (run_id is not pd.np.nan):
+    if (run_id is not None) and (run_id is not np.nan):
         descriptor += '_run-{0}'.format(run_id)
     if (file_tag is not None) and (file_type is not None):
         descriptor += '_{0}.{1}'.format(file_tag, file_type)
