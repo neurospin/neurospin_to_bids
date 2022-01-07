@@ -33,7 +33,10 @@ cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
 pip install -c requirements/production.txt -c requirements/test.txt -e .[dev]
+```
 
+Other commands that are useful for developers:
+```
 # Tests. Always confirm that they succeed before committing. Please.
 pytest  # run tests in the current environment
 
@@ -45,6 +48,7 @@ check-manifest  # check that all necessary files are installed by pip
 ./requirements/update.sh  # upgrade pinned dependency versions
 
 # Ensure that only packages pinned for production are installed
+# (beware that you will need to reinstall neuroglancer-scripts afterwards)
 pip-sync requirements/production.txt
 ```
 
@@ -157,7 +161,7 @@ creating a BIDS dataset with the data from the NeuroSpin server.
 
 Contains information about the participants and their acquisitions.
 When there are multiple sessions per subject (with different acquisition
-dates), then the _session_label_ column is mandatory. 
+dates), then the _session_label_ column is mandatory.
 
 
         participant_id	NIP		infos_participant		session_label	acq_date	acq_label	location	to_import
@@ -176,18 +180,18 @@ will be added to a new `participants.tsv` file included under the
 `rawdata` top folder.
 
 #### User case with 2 sessions the same day with the same participant
-For instance, if a participant undergoes an examination in the morning and in the afternoon, 
+For instance, if a participant undergoes an examination in the morning and in the afternoon,
 you have to complete the NIP with the number of session. The nip level in Neurospin
-is labelled as follow : '<nip>-<exman-number>-<automatic-number>' 
+is labelled as follow : '<nip>-<exman-number>-<automatic-number>'
 The examen number is automatically incremented for each new examination. Don't mange about
-the automatic number. 
+the automatic number.
 
 Here is an example for the `participants_to_import.tsv` file:
 
 
         participant_id  NIP             infos_participant               session_label   acq_date	acq_label        location        to_import
         sub-01          tt989898_6405   {"sex":"F", "age":"45"}         01              2010-06-28	      trio            [['2','anat','T1w'],['9','func','task-loc_std_run-01_bold']]
-        sub-01          tt989898_6405                                	02 		        2010-06-28	      trio            [['9','func','task-loc_std_bold']]
+        sub-01          tt989898_6406                                	02 		        2010-06-28	      trio            [['9','func','task-loc_std_bold']]
 
 #### User case for fmap importation (Multiple phase encoded directions)
 
@@ -198,7 +202,7 @@ Here is an example for the `participants_to_import.tsv` file:
         sub-01          tt989898_6405   {"sex":"F", "age":"45"}         01              2010-06-28	      prisma            [['24','anat','T1w'],['13','func','task-number_dir-ap_run-01_bold'],['14','func','task-number_dir-ap_run-01_sbref'],['5','fmap','dir-ap_epi',{'intendedFor':'/fmri/sub-301_task-number_dir-ap_run-01_bold'}]]
 
 #### User case for adding a field into the json file
-Here we are adding the IndendedFor field into the **fmap/sub-301_dir-ap_epi.json**. This field is not mandatory, but recommended. It seems 
+Here we are adding the IndendedFor field into the **fmap/sub-301_dir-ap_epi.json**. This field is not mandatory, but recommended. It seems
 if you use fmriprep, this field is not directly read and fmriprep use the **PhaseEncodingDirection" information which give by the scanner.
 
 		participant_id  NIP     infos_participant       session_label   acq_date        acq_label       location        to_import
@@ -222,11 +226,11 @@ Here is an example of `sub-*_<task>_events.tsv` following the BIDS standard:
         11.4    1          r_hand_audio
         15.0    1          sentence_audio
 
-the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in second. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject anonymity. See the [BIDS specification](https://bids.neuroimaging.io/).
+the onset, duration and trial_type columns are the only mandatory ones. onset and duration fields should be expressed in seconds. Other information can be added to events.tsv files such as response_time or other arbitrary additional columns respecting subject privacy. See the [BIDS specification](https://bids.neuroimaging.io/).
 
 
 # Deface
-If you want to import data and share them with other laboratories or on an open server, you have to anonymize them. For that, the bids importation remove all fields in the header containing specific
+If you want to import data and share them with other laboratories or on an open server, you have to de-identify them. For that, the bids importation remove all fields in the header containing specific
 information such as "Patient's name" and the script of importation will propose to deface anatomical data. The pydeface python is used to propose this step.
 If you need to deface, ensure that pydeface is installed on your workstation.
 

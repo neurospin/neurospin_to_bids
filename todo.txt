@@ -38,7 +38,7 @@
           print('****  BIDS IMPORTATION WARMING: SLICE TIMING SEEM TO BE IN MS CONVERSION IN Seconds IS DONE')
           slice_times = [round((v*10**-3), 4  for v in slice_times]
           dico_json['SliceTiming'] = slice_times
-          
+        
         TR = pydicom.read_file(dicom_ref).RepetitionTime
         if (TR > 10):
             print('****  BIDS IMPORTATION WARMING: REPETITION TIME SEEM TO BE IN MS, CONVERSION IN Seconds IS DONE')

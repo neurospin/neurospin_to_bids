@@ -17,6 +17,7 @@ from pathlib import Path
 
 import mne
 import pandas as pd
+import yaml
 import pydeface.utils as pdu
 from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
@@ -73,12 +74,11 @@ def yes_no(question: str, default: str = None) -> bool:
 
     while True:
         choice = input(question + prompt).lower()
-        if default is not None and choice == '':
+        if choice == '' and default is not None:
             return valid[default]
-        elif choice in valid:
+        if choice in valid:
             return valid[choice]
-        else:
-            print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+        print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
 
 
 def file_manager_default_file(main_path,
@@ -94,7 +94,7 @@ def file_manager_default_file(main_path,
     [key-value_]...[key-value_]file_tag.file_type.
     """
     filters = []
-    for n in list(reversed(range(1, len(filter_list) + 1))):
+    for n in reversed(range(1, len(filter_list) + 1)):
         filters += combinations(filter_list, n)
     filters += [[]]
     for filt in filters:
@@ -132,7 +132,7 @@ def get_bids_files(main_path,
                    file_type='*',
                    sub_id='*',
                    file_folder='*',
-                   filters=[],
+                   filters=None,
                    ref=False,
                    sub_folder=True,
                    allow_other_fields=True):
@@ -194,7 +194,7 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
     # raise warning if no folder is found in recorded events
     if not sub_folders:
         print(
-            f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: NO EVENTS FILE{Bcolors.ENDC}'
+            f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE{Bcolors.ENDC}'
         )
     else:
         for sub_folder in sub_folders:
@@ -287,7 +287,7 @@ def get_bids_default_path(data_root_path='', dataset_name=None):
 
 def bids_init_dataset(data_root_path='',
                       dataset_name=None,
-                      dataset_description=dict(),
+                      dataset_description=None,
                       readme='',
                       changes=''):
     """Create directories and files missing to follow bids.
@@ -297,7 +297,7 @@ def bids_init_dataset(data_root_path='',
     according to the standard. Particularly those that should be filled
     manually like README files.
 
-    dataset_description.json : interactif mode to fill in. Or laer on if the
+    dataset_description.json : interactif mode to fill in. Or later on if the
     user wants. By default :
     Name: dataset_name
     BidsVersion: 1.0.0
@@ -320,7 +320,7 @@ def bids_init_dataset(data_root_path='',
     overwrite_datadesc_file = True
     if description_file:
         overwrite_datadesc_file = yes_no(
-            '\nA dataset_description.json is already existing, do you want to overwrite?',
+            '\nA dataset_description.json already exists, do you want to overwrite?',
             default="yes")
     if overwrite_datadesc_file or not description_file:
         data_descrip = yes_no(
@@ -362,14 +362,14 @@ def bids_init_dataset(data_root_path='',
 
     # CHECK CHANGES FILE / TEXT FILE CPAN CONVENTION
     changes_file = os.path.join(dataset_name_path, 'CHANGES')
-    changes_file_exist = os.path.exists(changes_file)
+    changes_file_exists = os.path.exists(changes_file)
     overwrite_changes_file = True
-    if changes_file_exist:
+    if changes_file_exists:
         overwrite_changes_file = yes_no(
-            '\nA CHANGES file is already existing, do you want to overwrite?',
+            '\nA CHANGES file already exists, do you want to overwrite?',
             default="yes")
 
-    if overwrite_changes_file or not changes_file_exist:
+    if overwrite_changes_file or not changes_file_exists:
         changes = yes_no('\nDo you want to create/overwrite the CHANGES file?',
                          default="yes")
         if changes:
@@ -383,7 +383,7 @@ def bids_init_dataset(data_root_path='',
     overwrite_readme_file = True
     if readme_file_exist:
         overwrite_readme_file = yes_no(
-            '\nA README file is already existing, do you want to overwrite?',
+            '\nA README file already exists, do you want to overwrite?',
             default="yes")
 
     if overwrite_readme_file or not readme_file_exist:
@@ -507,8 +507,7 @@ def bids_acquisition_download(data_root_path='',
 
     # ~ print(df_participant)
 
-    for row_idx, subject_info in pop.iterrows():
-        # the row_idx for giving either participant_label or participant_id
+    for _unused_index, subject_info in pop.iterrows():
         subject_id = subject_info[0].strip()
 
         # Fill the partcipant information for the participants_to_import.tsv
@@ -525,10 +524,7 @@ def bids_acquisition_download(data_root_path='',
 
         # Determine path to files in NeuroSpin server
         download_database = subject_info['location'].strip()
-        if download_database in NEUROSPIN_DATABASES:
-            db_path = NEUROSPIN_DATABASES[download_database]
-        else:
-            db_path = download_database
+        db_path = NEUROSPIN_DATABASES.get(download_database, download_database)
 
         # sub_path = target_root_path + subject_id + ses_path
         # Mange the optional filters
@@ -589,7 +585,8 @@ def bids_acquisition_download(data_root_path='',
         to_import = subject_info['to_import'].strip()
         if to_import:
             seqs_to_retrieve = literal_eval(to_import)
-            assert isinstance(seqs_to_retrieve, collections.abc.Collection)
+            if not isinstance(seqs_to_retrieve, collections.abc.Collection):
+                raise TypeError("seqs_to_retrieve must be a Collection")
         else:
             seqs_to_retrieve = []
         print("Scans for ", nip)
@@ -656,8 +653,7 @@ def bids_acquisition_download(data_root_path='',
 
             # ANAT and FUNC case
             # todo: bad practices, to refactor for the sake of simplicity
-            elif (value[1] == 'anat') or (value[1] == 'func') or (
-                    value[1] == 'dwi') or (value[1] == 'fmap'):
+            elif value[1] in ('anat', 'func', 'dwi', 'fmap'):
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
@@ -743,6 +739,18 @@ def bids_acquisition_download(data_root_path='',
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
+        # Importation and conversion of dicom files
+        dcm2nii_batch = dict(Options=dict(isGz='false',
+                                          isFlipY='false',
+                                          isVerbose='false',
+                                          isCreateBIDS='true',
+                                          isOnlySingleFile='false'),
+                             Files=infiles_dcm2nii)
+
+    dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
+    with open(dcm2nii_batch_file, 'w') as f:
+        _unused_data = yaml.dump(dcm2nii_batch, f)
+
     print(
         "\n------------------------------------------------------------------------------------"
     )
@@ -779,9 +787,8 @@ def bids_acquisition_download(data_root_path='',
         print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
     else:
         print('\n')
-        dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
-        cmd = "dcm2niibatch %s" % (dcm2nii_batch_file)
-        subprocess.call(cmd, shell=True)
+        cmd = ("dcm2niibatch", dcm2nii_batch_file)
+        subprocess.call(cmd)
 
         # loop for checking if downloaded are ok and create the downloaded files
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
