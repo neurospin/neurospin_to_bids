@@ -272,8 +272,8 @@ def get_bids_file_descriptor(subject_id,
         descriptor += '_task-{0}'.format(task_id)
     if (acq_label is not None) and (acq_label is not np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
-    if (echo_id is not None) and (echo_id is not np.nan):
-        descriptor += '_echo-{0}'.format(echo_id)
+    if (echo_label is not None) and (echo_label is not np.nan):
+        descriptor += '_echo-{0}'.format(echo_label)
     if (part_label is not None) and (part_label is not np.nan):
         descriptor += '_part-{0}'.format(part_label)
     if (fa_id is not None) and (fa_id is not np.nan):
@@ -626,7 +626,7 @@ def bids_acquisition_download(data_root_path='',
             run_dir = get_value('dir', value[2])
             echo_id = get_value('echo', value[2])
             part_label = get_value('part', value[2])
-            fa_id = get_value('fa',value[2])
+            fa_id = get_value('fa', value[2])
             run_session = session_id
 
             tag = value[2].split('_')[-1]
@@ -771,7 +771,7 @@ def bids_acquisition_download(data_root_path='',
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
-        _unused_data = yaml.dump(dcm2nii_batch, f)
+        _ = yaml.dump(dcm2nii_batch, f)
 
     print(
         "\n------------------------------------------------------------------------------------"
