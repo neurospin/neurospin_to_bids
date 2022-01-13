@@ -624,7 +624,6 @@ def bids_acquisition_download(data_root_path='',
             acq_label = get_value('acq', value[2])
             run_id = get_value('run', value[2])
             run_dir = get_value('dir', value[2])
-            acq_label = get_value('acq',value[2])
             echo_id = get_value('echo', value[2])
             part_label = get_value('part', value[2])
             fa_id = get_value('fa',value[2])
