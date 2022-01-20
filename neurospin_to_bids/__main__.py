@@ -246,7 +246,7 @@ def get_bids_file_descriptor(subject_id,
                              rec_id=None,
                              fa_id=None,
                              part_label=None,
-                             echo_label=None,
+                             echo_id=None,
                              run_id=None,
                              run_dir=None,
                              file_tag=None,
@@ -272,8 +272,8 @@ def get_bids_file_descriptor(subject_id,
         descriptor += '_task-{0}'.format(task_id)
     if (acq_label is not None) and (acq_label is not np.nan):
         descriptor += '_acq-{0}'.format(acq_label)
-    if (echo_label is not None) and (echo_label is not np.nan):
-        descriptor += '_echo-{0}'.format(echo_label)
+    if (echo_id is not None) and (echo_id is not np.nan):
+        descriptor += '_echo-{0}'.format(echo_id)
     if (part_label is not None) and (part_label is not np.nan):
         descriptor += '_part-{0}'.format(part_label)
     if (fa_id is not None) and (fa_id is not np.nan):
