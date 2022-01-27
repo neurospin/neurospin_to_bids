@@ -33,18 +33,22 @@ cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
 pip install -c requirements/production.txt -c requirements/test.txt -e .[dev]
+
+# Please install pre-commit if you intend to contribute
+pre-commit install  # install the pre-commit hook
 ```
 
 Other commands that are useful for developers:
 ```
 # Tests. Always confirm that they succeed before committing. Please.
-pytest  # run tests in the current environment
 
-# Run tests in an isolated environment that closely approximates production
+# Run tests in an isolated environment that closely approximates
+# production, as well as code quality checks (recommended)
 tox
 
+pytest  # run tests in the current environment
+
 # Other commands useful for development
-check-manifest  # check that all necessary files are installed by pip
 ./requirements/update.sh  # upgrade pinned dependency versions
 
 # Ensure that only packages pinned for production are installed
