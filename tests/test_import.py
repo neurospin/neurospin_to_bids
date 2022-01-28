@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import distutils.spawn
+import shutil
 import subprocess
 
 
@@ -16,7 +16,7 @@ def test_simple_import_mri(tmp_path):
                 'sub-01\taa000001\t2000-01-01\tprisma\t'
                 '[[3,"anat","T1w"],[4,"func","task-rest_bold"]]\n')
 
-    exe = distutils.spawn.find_executable('neurospin_to_bids')
+    exe = shutil.which('neurospin_to_bids')
     assert exe is not None
     assert subprocess.call([exe, '-h']) == 0
     ret = subprocess.call([

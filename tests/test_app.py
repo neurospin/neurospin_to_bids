@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import distutils.spawn
+import shutil
 import subprocess
 
 
 def test_app_help():
-    exe = distutils.spawn.find_executable('neurospin_to_bids')
+    exe = shutil.which('neurospin_to_bids')
     assert exe is not None
     print('Testing neurospin_to_bids executable: ' + exe)
     assert subprocess.call([exe, '-h']) == 0
