@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -198,9 +199,8 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
 
     # raise warning if no folder is found in recorded events
     if not sub_folders:
-        print(
-            f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE{Bcolors.ENDC}'
-        )
+        print(f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE'
+              f'{Bcolors.ENDC}')
     else:
         for sub_folder in sub_folders:
             # ~ file_path = sub_folder.replace(behav_path + '/', '')
@@ -239,7 +239,8 @@ def get_bids_path(data_root_path='',
         session_id = ''
     else:
         session_id = 'ses-' + session_id
-    return os.path.join(data_root_path, 'sub-' + subject_id, session_id, folder)
+    return os.path.join(data_root_path, 'sub-' + subject_id, session_id,
+                        folder)
 
 
 def get_bids_file_descriptor(subject_id,
@@ -337,28 +338,32 @@ def bids_init_dataset(data_root_path='',
     overwrite_datadesc_file = True
     if description_file:
         overwrite_datadesc_file = yes_no(
-            '\nA dataset_description.json already exists, do you want to overwrite?',
-            default="yes")
+            '\nA dataset_description.json already exists, do you want to '
+            'overwrite?', default="yes")
     if overwrite_datadesc_file or not description_file:
-        data_descrip = yes_no(
-            '\nDo you want to create or overwrite the dataset_description.json?',
-            default="yes", noninteractive=False)
+        data_descrip = yes_no('\nDo you want to create or overwrite the '
+                              'dataset_description.json?',
+                              default="yes", noninteractive=False)
         if data_descrip:
-            print(
-                '\nIf you do not know all information: pass and edit the file later.'
-            )
-            name = input("\nType the name of this BIDS dataset: ").capitalize()
-            authors = input("\nA list of authors like `a, b, c`: ").capitalize()
+            print('\nIf you do not know all information: skip and edit the '
+                  'file later on.')
+            name = input("\nType the name of this BIDS dataset: ")
+            authors = input("\nA list of authors like `a, b, c`: ")
             acknowledgements = input(
-                "\nA list of acknowledgements like `a, b, c`: ").capitalize()
+                "\nA list of acknowledgements like `a, b, c`: ")
             how_to_acknowledge = input(
-                "\nEither a str describing how to  acknowledge this dataset OR a list of publications that should be cited: "
+                "\nEither a str describing how to  acknowledge this dataset "
+                "OR a list of publications that should be cited: "
             )
             funding = input(
-                '\nList of sources of funding (e.g., grant numbers). Must be a list of strings or a single comma separated string like `a, b, c`: '
+                '\nList of sources of funding (e.g., grant numbers). Must be '
+                'a list of strings or a single comma separated string like '
+                '`a, b, c`: '
             )
             references_and_links = input(
-                "\nList of references to publication that contain information on the dataset, or links. Must be a list of strings or a single comma separated string like `a, b, c`: "
+                "\nList of references to publication that contain information "
+                "on the dataset, or links. Must be a list of strings or a "
+                "single comma separated string like `a, b, c`: "
             )
             doi = input('\nThe DOI for the dataset: ')
             make_dataset_description(dataset_name_path,
@@ -372,9 +377,8 @@ def bids_init_dataset(data_root_path='',
                                      doi=doi,
                                      verbose=False)
         else:
-            print(
-                "\nYou may update the README file later on. A README file by default has been created."
-            )
+            print("\nYou may update the README file later on. A README file "
+                  "has been created with dummy contents.")
             make_dataset_description(dataset_name_path, name=dataset_name)
 
     # CHECK CHANGES FILE / TEXT FILE CPAN CONVENTION
@@ -470,7 +474,8 @@ def bids_acquisition_download(data_root_path='',
     if not os.path.exists(report_path):
         os.makedirs(report_path)
     download_report = open(os.path.join(report_path, download_report), 'w')
-    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id', 'download_file')
+    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id',
+    # ~                               'download_file')
     # ~ download_report.write(report_line)
     list_imported = []
     list_already_imported = []
@@ -497,7 +502,8 @@ def bids_acquisition_download(data_root_path='',
 
     # Download command for each subject/session
     # one line has the following information
-    # participant_id / NIP / infos_participant / session_label / acq_date / location / to_import
+    # participant_id / NIP / infos_participant / session_label / acq_date /
+    # location / to_import
 
     # Read the participants_to_import.tsv file for getting subjects/sessions to
     # download
@@ -539,9 +545,8 @@ def bids_acquisition_download(data_root_path='',
             subject_id = 'sub-{0}'.format(subject_id)
         else:
             if 'sub-' not in subject_id:
-                print(
-                    f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: SUBJECT ID PROBABLY NOT CONFORM{Bcolors.ENDC}'
-                )
+                print(f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: SUBJECT ID '
+                      f'PROBABLY NOT CONFORM{Bcolors.ENDC}')
 
         sub_path = os.path.join(target_root_path, subject_id, ses_path)
         if not os.path.exists(sub_path):
@@ -562,13 +567,15 @@ def bids_acquisition_download(data_root_path='',
 
         # Get appropriate download file. As specific as possible
         # ~ specs_path = file_manager_default_file(exp_info_path,
-        # ~                                        optional_filters, 'download',
+        # ~                                        optional_filters,
+        # ~                                        'download',
         # ~                                        file_type='tsv',
         # ~                                        allow_other_fields=False)
         # ~ report_line = '%s,%s,%s\n' % (subject_id, session_id, specs_path)
         # ~ download_report.write(report_line)
 
-        # ~ specs = pd.read_csv(specs_path, dtype=str, sep='\t', index_col=False)
+        # ~ specs = pd.read_csv(specs_path, dtype=str, sep='\t',
+        # ~                     index_col=False)
 
         # Retrieve list of list for seqs to import
         # One tuple is configured as :(file_to_import;acq_folder;acq_name)
@@ -621,11 +628,6 @@ def bids_acquisition_download(data_root_path='',
                 meg_path = os.path.join(sub_path, 'meg')
                 if not os.path.exists(meg_path):
                     os.makedirs(meg_path)
-
-                # Create the sub-emptyroom
-                # ~ sub-emptyroom_path = os.path.join(data_root_path, 'sub_emptyroom')
-                # ~ if not os.path.exists(sub-emptyroom_path):
-                    # ~ os.makedirs(sub-emptyroom_path)
 
                 meg_file = os.path.join(
                     acquisition_db.get_database_path(subject_info['location']),
@@ -739,40 +741,25 @@ def bids_acquisition_download(data_root_path='',
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
-        _ = yaml.dump(dcm2nii_batch, f)
+        yaml.dump(dcm2nii_batch, f)
 
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
-    print(
-        "-------------------    SUMMARY OF IMPORTATION   --------------------------------------"
-    )
-    print(
-        "--------------------------------------------------------------------------------------\n"
-    )
+    print("\n" + "-" * 80)
+    print("-" * 25 + "    SUMMARY OF IMPORTATION    " + "-" * 25)
+    print("-" * 80)
     for i in list_already_imported:
         print(i)
         download_report.write(i)
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
+    print("\n" + "-" * 80)
     for i in list_imported:
         print(i)
         download_report.write(i)
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
+    print("\n" + "-" * 80)
     print(Bcolors.WARNING, end='')
     for i in list_warning:
         print('\n  WARNING: ' + i)
         download_report.write('\n  WARNING: ' + i)
     print(Bcolors.ENDC)
-    print(
-        "------------------------------------------------------------------------------------"
-    )
-    print(
-        "------------------------------------------------------------------------------------\n"
-    )
+    print("-" * 80 + "\n" + "-" * 80)
     download_report.close()
 
     if dry_run:
@@ -785,7 +772,8 @@ def bids_acquisition_download(data_root_path='',
             print(f'{Bcolors.FAIL}dcm2niibatch returned an error, see above'
                   f'{Bcolors.ENDC}')
 
-        # loop for checking if downloaded are ok and create the downloaded files
+        # loop for checking if downloaded are ok and create the downloaded
+        # files
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
         #    done_file.close()
 
@@ -809,7 +797,8 @@ def bids_acquisition_download(data_root_path='',
             print(template)
             os.environ['FSLDIR'] = "/i2bm/local/fsl/bin/"
             os.environ['FSLOUTPUTTYPE'] = "NIFTI_PAIR"
-            os.environ['PATH'] = os.environ['FSLDIR'] + ":" + os.environ['PATH']
+            os.environ['PATH'] = (os.environ['FSLDIR']
+                                  + os.pathsep + os.environ['PATH'])
 
             for file_to_deface in files_for_pydeface:
                 print(f"\nDeface with pydeface {file_to_deface}")
@@ -850,22 +839,19 @@ def bids_acquisition_download(data_root_path='',
             bids_validation_report = os.path.join(report_path,
                                                   "report_bids_valisation.txt")
             if shutil.which('bids-validator'):
-                cmd = f"bids-validator {target_root_path} > {bids_validation_report}"
+                cmd = (f"bids-validator {shlex.quote(target_root_path)} "
+                       f"| tee {shlex.quote(bids_validation_report)}")
                 subprocess.call(cmd, shell=True)
-                cmd = f"cat < {bids_validation_report}"
-                subprocess.call(cmd, shell=True)
-                print(
-                    f'\n\nSee the summary of bids validator at {bids_validation_report}'
-                )
+                print(f'\n\nSee the summary of bids validator at '
+                      f'{bids_validation_report}')
             else:
                 validator = BIDSValidator()
                 os.chdir(target_root_path)
                 for file_to_test in Path('.').glob('./**/*'):
                     if file_to_test.is_file():
                         file_to_test = '/' + str(file_to_test)
-                        print(
-                            f'\nTest the following name of file : {file_to_test} with BIDSValidator'
-                        )
+                        print(f'\nTest the following name of file: '
+                              f'{file_to_test} with BIDSValidator')
                         print(validator.is_bids(file_to_test))
 
     print('\n')
@@ -877,7 +863,9 @@ def main(argv=sys.argv):
         print('ERROR: neurospin_to_bids needs Python 3.6 or later')
         return 1
     # Parse arguments from console
-    parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
+    parser = argparse.ArgumentParser(
+        description='NeuroSpin to BIDS conversion'
+    )
     parser.add_argument('--root-path', '-root_path',
                         default='.',
                         help='directory containing exp_info to download into')
