@@ -6,6 +6,8 @@ import os
 
 import pandas as pd
 
+from .utils import UserError
+
 
 def read_participants_to_import(exp_info_path, filename=None):
     """Load participants_to_import.tsv as a Pandas dataframe.
@@ -19,7 +21,7 @@ def read_participants_to_import(exp_info_path, filename=None):
     (the old, deprecated name for that file).
     """
     if not os.path.exists(exp_info_path):
-        raise Exception('exp_info directory not found')
+        raise UserError('exp_info directory not found')
     if os.path.isfile(os.path.join(exp_info_path,
                                    'participants_to_import.tsv')):
         participants_to_import = os.path.join(exp_info_path,
@@ -29,7 +31,7 @@ def read_participants_to_import(exp_info_path, filename=None):
         participants_to_import = os.path.join(exp_info_path,
                                               'participants.tsv')
     else:
-        raise Exception('exp_info/participants_to_import.tsv not found')
+        raise UserError('exp_info/participants_to_import.tsv not found')
     return pd.read_csv(participants_to_import,
                        dtype=str,
                        sep='\t',
