@@ -25,9 +25,9 @@ from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
 import pkg_resources
 
-from . import dicom_database
+from . import acquisition_db
 from . import exp_info
-from .utils import UserError
+from .utils import DataError, UserError
 
 
 class Bcolors:
@@ -46,7 +46,11 @@ class Bcolors:
     UNDERLINE = '\033[4m'
 
 
-def yes_no(question: str, default: str = None) -> bool:
+NONINTERACTIVE = False
+
+
+def yes_no(question: str, *,
+           default: str = None, noninteractive: bool) -> bool:
     """A simple yes/no prompt
 
     Args:
@@ -61,6 +65,8 @@ def yes_no(question: str, default: str = None) -> bool:
     Returns:
         bool: Boolean answer to the yes/no question.
     """
+    if NONINTERACTIVE:
+        return noninteractive
     valid = {"yes": True, "y": True, "no": False, "n": False}
     if default is None:
         prompt = " [y/n] "
@@ -336,7 +342,7 @@ def bids_init_dataset(data_root_path='',
     if overwrite_datadesc_file or not description_file:
         data_descrip = yes_no(
             '\nDo you want to create or overwrite the dataset_description.json?',
-            default="yes")
+            default="yes", noninteractive=False)
         if data_descrip:
             print(
                 '\nIf you do not know all information: pass and edit the file later.'
@@ -382,7 +388,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_changes_file or not changes_file_exists:
         changes = yes_no('\nDo you want to create/overwrite the CHANGES file?',
-                         default="yes")
+                         default="yes", noninteractive=False)
         if changes:
             changes_input = input("Type your text: ")
             with open(changes_file, 'w', encoding="utf-8") as fid:
@@ -399,7 +405,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_readme_file or not readme_file_exist:
         readme = yes_no('\nDo you want to create/complete the README file?',
-                        default="yes")
+                        default="yes", noninteractive=False)
         if not readme:
             readme_input = "TO BE COMPLETED BY THE USER"
         else:
@@ -503,7 +509,7 @@ def bids_acquisition_download(data_root_path='',
         subject_id = subject_info[0].strip()
 
         # Fill the partcipant information for the participants_to_import.tsv
-        if subject_info['infos_participant'].strip():
+        if subject_info.get('infos_participant', '').strip():
             info_participant = json.loads(
                 subject_info['infos_participant'].strip())
         else:
@@ -514,19 +520,15 @@ def bids_acquisition_download(data_root_path='',
             info_participant.update(existing_items)
         dic_info_participants[subject_id] = info_participant
 
-        # Determine path to files in NeuroSpin server
-        db_path = dicom_database.get_database_path(subject_info['location'])
-
         # sub_path = target_root_path + subject_id + ses_path
         # Mange the optional filters
         # optional_filters = [('sub', subject_id)]
         # if session_id is not None:
         #  optional_filters += [('ses', session_id)]
-        if 'session_label' in subject_info.index:
-            if subject_info['session_label'].strip():
-                session_id = subject_info['session_label'].strip()
-            else:
-                session_id = None
+        if subject_info.get('session_label', '').strip():
+            session_id = subject_info['session_label'].strip()
+        else:
+            session_id = None
         if session_id is None:
             ses_path = ''
         else:
@@ -581,7 +583,7 @@ def bids_acquisition_download(data_root_path='',
         else:
             seqs_to_retrieve = []
         print("Scans for ", nip)
-        print(json.dumps(to_import))
+        print(json.dumps(seqs_to_retrieve))
         # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
         if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
@@ -625,7 +627,10 @@ def bids_acquisition_download(data_root_path='',
                 # ~ if not os.path.exists(sub-emptyroom_path):
                     # ~ os.makedirs(sub-emptyroom_path)
 
-                meg_file = os.path.join(db_path, nip, acq_date, value[0])
+                meg_file = os.path.join(
+                    acquisition_db.get_database_path(subject_info['location']),
+                    nip, acq_date, value[0]
+                )
                 print(meg_file)
                 filename = get_bids_file_descriptor(subject_id,
                                                     task_id=run_task,
@@ -654,35 +659,20 @@ def bids_acquisition_download(data_root_path='',
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
-                nip_dirs = glob.glob(
-                    os.path.join(db_path, str(acq_date),
-                                 str(nip) + '*'))
-                # ~ print(os.path.join(db_path, str(acq_date), str(nip) + '*'))
-                if len(nip_dirs) < 1:
-                    list_warning.append(
-                        f"\n {Bcolors.WARNING}WARNING: No directory found for given NIP {nip} and SESSION {session_id}{Bcolors.ENDC}"
-                    )
-                    # ~ print(message)
-                    # ~ download_report.write(message)
+                try:
+                    nip_dir = acquisition_db.get_session_path(
+                        subject_info['location'], acq_date, nip)
+                except DataError as exc:
+                    list_warning.append(str(exc))
                     download = False
-                elif len(nip_dirs) > 1:
-                    list_warning.append(
-                        f"\n  {Bcolors.WARNING}WARNING: Multiple path for given NIP {nip} \
-                            SESSION {session_id} - please \
-                            mention the session of the subject for this date, \
-                            2 sessions for the same subject the same day are \
-                            possible{Bcolors.ENDC}")
-                    # ~ print(message)
-                    # ~ download_report.write(message)
-                    download = False
-                else:
-                    path_file_glob = os.path.join(
-                        nip_dirs[0], '{0:06d}_*'.format(int(value[0])))
-                    # ~ print(path_file_glob)
-                    dicom_paths = glob.glob(path_file_glob)
+                    continue
+                path_file_glob = os.path.join(
+                    nip_dir, '{0:06d}_*'.format(int(value[0])))
+                # ~ print(path_file_glob)
+                dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
-                    list_warning.append("\n WARNING: file not found "
+                    list_warning.append("file not found "
                                         + path_file_glob)
                     # ~ print(message)
                     # ~ download_report.write(message)
@@ -772,11 +762,13 @@ def bids_acquisition_download(data_root_path='',
     print(
         "\n------------------------------------------------------------------------------------"
     )
+    print(Bcolors.WARNING, end='')
     for i in list_warning:
-        print(i)
-        download_report.write(i)
+        print('\n  WARNING: ' + i)
+        download_report.write('\n  WARNING: ' + i)
+    print(Bcolors.ENDC)
     print(
-        "\n------------------------------------------------------------------------------------"
+        "------------------------------------------------------------------------------------"
     )
     print(
         "------------------------------------------------------------------------------------\n"
@@ -788,7 +780,10 @@ def bids_acquisition_download(data_root_path='',
     else:
         print('\n')
         cmd = ("dcm2niibatch", dcm2nii_batch_file)
-        subprocess.call(cmd)
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            print(f'{Bcolors.FAIL}dcm2niibatch returned an error, see above'
+                  f'{Bcolors.ENDC}')
 
         # loop for checking if downloaded are ok and create the downloaded files
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
@@ -850,7 +845,7 @@ def bids_acquisition_download(data_root_path='',
         # Validate paths with BIDSValidator
         # see also http://bids-standard.github.io/bids-validator/
         validation_bids = yes_no('\nDo you want to use a bids validator?',
-                                 default=None)
+                                 default=None, noninteractive=False)
         if validation_bids:
             bids_validation_report = os.path.join(report_path,
                                                   "report_bids_valisation.txt")
@@ -876,9 +871,11 @@ def bids_acquisition_download(data_root_path='',
     print('\n')
 
 
-def main():
+def main(argv=sys.argv):
+    global NONINTERACTIVE
     if sys.version_info < (3, 6):
-        sys.exit("error: neurospin_to_bids needs Python 3.6 or later")
+        print('ERROR: neurospin_to_bids needs Python 3.6 or later')
+        return 1
     # Parse arguments from console
     parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
     parser.add_argument('--root-path', '-root_path',
@@ -892,28 +889,35 @@ def main():
                         action='store_true',
                         help='copy events from a directory with the same '
                         'structure')
-    parser.add_argument('--neurospin-database', '-neurospin_database',
-                        type=str,
-                        default='prisma',
-                        help='neurospin server to download from')
+    parser.add_argument('--acquisition-dir',
+                        default='/neurospin/acquisition',
+                        help='path to the NeuroSpin acquisition archive '
+                        '[default: /neurospin/acquisition]')
     parser.add_argument('--dry-run', '-n', '-dry-run',
                         action='store_true',
                         help='Test without importation of data')
+    parser.add_argument('--noninteractive', action='store_true',
+                        help='Do not request interactive input from the '
+                        'terminal')
 
     # LOAD CONSOLE ARGUMENTS
-    args = parser.parse_args()
-    deface = yes_no('\nDo you want deface T1?', default=None)
+    args = parser.parse_args(argv[1:])
+    NONINTERACTIVE = args.noninteractive
+    acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
+    deface = yes_no('\nDo you want deface T1?', default=None,
+                    noninteractive=False)
     try:
-        bids_acquisition_download(data_root_path=args.root_path,
-                                  dataset_name=args.dataset_name,
-                                  force_download=False,
-                                  behav_path='exp_info/recorded_events',
-                                  copy_events=args.copy_events,
-                                  deface=deface,
-                                  dry_run=args.dry_run)
+        return bids_acquisition_download(data_root_path=args.root_path,
+                                         dataset_name=args.dataset_name,
+                                         force_download=False,
+                                         behav_path='exp_info/recorded_events',
+                                         copy_events=args.copy_events,
+                                         deface=deface,
+                                         dry_run=args.dry_run) or 0
     except UserError as exc:
-        sys.exit('User error, aborting: {0}'.format(exc))
+        print('USER ERROR, aborting: {0}'.format(exc))
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv))
