@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import argparse
 import collections.abc
@@ -24,12 +25,9 @@ from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
 import pkg_resources
 
-NEUROSPIN_DATABASES = {
-    'prisma': '/neurospin/acquisition/database/Prisma_fit',
-    'trio': '/neurospin/acquisition/database/TrioTim',
-    '7T': '/neurospin/acquisition/database/Investigational_Device_7T',
-    'meg': '/neurospin/acquisition/neuromag/data',
-}
+from . import dicom_database
+from . import exp_info
+from .utils import UserError
 
 
 class Bcolors:
@@ -449,22 +447,7 @@ def bids_acquisition_download(data_root_path='',
     ####################################
     # CHECK PATHS AND FILES
     ####################################
-
-    # exp_info path where is the participants_to_import.tsv
-    # ~ print(data_root_path)
     exp_info_path = os.path.join(data_root_path, 'exp_info')
-    if not os.path.exists(exp_info_path):
-        raise Exception('exp_info directory not found')
-    if os.path.isfile(os.path.join(exp_info_path,
-                                   'participants_to_import.tsv')):
-        participants_to_import = os.path.join(exp_info_path,
-                                              'participants_to_import.tsv')
-    elif os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
-        # Legacy name of participants_to_import.tsv
-        participants_to_import = os.path.join(exp_info_path,
-                                              'participants.tsv')
-    else:
-        raise Exception('exp_info/participants_to_import.tsv not found')
 
     # Determine target path with the name of dataset
     dataset_name, target_root_path = get_bids_default_path(
@@ -512,11 +495,7 @@ def bids_acquisition_download(data_root_path='',
 
     # Read the participants_to_import.tsv file for getting subjects/sessions to
     # download
-    pop = pd.read_csv(participants_to_import,
-                      dtype=str,
-                      sep='\t',
-                      na_filter=False,
-                      index_col=False)
+    pop = exp_info.read_participants_to_import(exp_info_path)
 
     # ~ print(df_participant)
 
@@ -536,8 +515,7 @@ def bids_acquisition_download(data_root_path='',
         dic_info_participants[subject_id] = info_participant
 
         # Determine path to files in NeuroSpin server
-        download_database = subject_info['location'].strip()
-        db_path = NEUROSPIN_DATABASES.get(download_database, download_database)
+        db_path = dicom_database.get_database_path(subject_info['location'])
 
         # sub_path = target_root_path + subject_id + ses_path
         # Mange the optional filters
@@ -925,13 +903,16 @@ def main():
     # LOAD CONSOLE ARGUMENTS
     args = parser.parse_args()
     deface = yes_no('\nDo you want deface T1?', default=None)
-    bids_acquisition_download(data_root_path=args.root_path,
-                              dataset_name=args.dataset_name,
-                              force_download=False,
-                              behav_path='exp_info/recorded_events',
-                              copy_events=args.copy_events,
-                              deface=deface,
-                              dry_run=args.dry_run)
+    try:
+        bids_acquisition_download(data_root_path=args.root_path,
+                                  dataset_name=args.dataset_name,
+                                  force_download=False,
+                                  behav_path='exp_info/recorded_events',
+                                  copy_events=args.copy_events,
+                                  deface=deface,
+                                  dry_run=args.dry_run)
+    except UserError as exc:
+        sys.exit('User error, aborting: {0}'.format(exc))
 
 
 if __name__ == "__main__":

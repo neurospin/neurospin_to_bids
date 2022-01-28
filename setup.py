@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # All build configuration is contained in setup.cfg.
 #
 # This file is present for compatibility with legacy builds (i.e. those not

@@ -5,6 +5,8 @@ graft neurospin_to_bids/template_deface
 
 recursive-include tests *.py
 include tox.ini
+include .pre-commit-config.yaml
+exclude .deepsource.toml
 recursive-include requirements *.in
 recursive-include requirements *.sh
 recursive-include requirements *.txt

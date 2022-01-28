@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import distutils.spawn
 import subprocess
 
