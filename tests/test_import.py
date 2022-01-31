@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import shutil
-import subprocess
+
+import neurospin_to_bids.__main__
 
 
 def test_simple_import_mri(tmp_path):
@@ -18,8 +19,7 @@ def test_simple_import_mri(tmp_path):
 
     exe = shutil.which('neurospin_to_bids')
     assert exe is not None
-    assert subprocess.call([exe, '-h']) == 0
-    ret = subprocess.call([
+    ret = neurospin_to_bids.__main__.main([
         'neurospin_to_bids', '--noninteractive', '--dry-run',
         '--acquisition-dir', str(tmp_path / 'acq'),
         '--root-path', str(tmp_path)

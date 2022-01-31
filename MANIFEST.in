@@ -1,7 +1,7 @@
 exclude todo.txt
 prune test_dataset
 
-graft neurospin_to_bids/template_deface
+graft src/neurospin_to_bids/template_deface
 
 recursive-include tests *.py
 include tox.ini
