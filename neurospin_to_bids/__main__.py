@@ -50,7 +50,7 @@ NONINTERACTIVE = False
 
 
 def yes_no(question: str, *,
-           default: str = None, noninteractive: bool) -> bool:
+           default: str = None, noninteractive: bool = None) -> bool:
     """A simple yes/no prompt
 
     Args:
@@ -65,9 +65,12 @@ def yes_no(question: str, *,
     Returns:
         bool: Boolean answer to the yes/no question.
     """
-    if NONINTERACTIVE:
-        return noninteractive
     valid = {"yes": True, "y": True, "no": False, "n": False}
+    if NONINTERACTIVE:
+        if noninteractive is not None:
+            return noninteractive
+        else:
+            return valid[default]
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
