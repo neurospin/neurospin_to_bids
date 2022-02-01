@@ -5,6 +5,7 @@ import argparse
 import collections.abc
 import glob
 import json
+import logging
 import os
 import re
 import shlex
@@ -31,20 +32,7 @@ from . import exp_info
 from .utils import DataError, UserError
 
 
-class Bcolors:
-    """Colors to improve print statements' readability
-
-    Example:
-        `print(f"{Bcolors.OKBLUE}Hello World!{Bcolors.ENDC}")`
-    """
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+logger = logging.getLogger(__name__)
 
 
 NONINTERACTIVE = False
@@ -191,19 +179,16 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
                      dataset_name=None):
     dataset_name, data_path = get_bids_default_path(data_root_path,
                                                     dataset_name)
-    # ~ print(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*'))
     if glob.glob(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*')):
         sub_folders = glob.glob(
             os.path.join(behav_path, 'sub-*', 'ses-*', 'func'))
     else:
-        # ~ print(os.path.join(data_root_path, behav_path,'sub-*', 'func'))
         sub_folders = glob.glob(
             os.path.join(data_root_path, behav_path, 'sub-*', 'func'))
 
     # raise warning if no folder is found in recorded events
     if not sub_folders:
-        print(f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE'
-              f'{Bcolors.ENDC}')
+        logger.warning('no events file')
     else:
         for sub_folder in sub_folders:
             # ~ file_path = sub_folder.replace(behav_path + '/', '')
@@ -512,9 +497,8 @@ def bids_acquisition_download(data_root_path='',
     # download
     pop = exp_info.read_participants_to_import(exp_info_path)
 
-    # ~ print(df_participant)
-
     for _unused_index, subject_info in pop.iterrows():
+        logger.debug('Now handling:\n%s', subject_info)
         subject_id = subject_info[0].strip()
 
         # Fill the partcipant information for the participants_to_import.tsv
@@ -548,8 +532,7 @@ def bids_acquisition_download(data_root_path='',
             subject_id = 'sub-{0}'.format(subject_id)
         else:
             if 'sub-' not in subject_id:
-                print(f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: SUBJECT ID '
-                      f'PROBABLY NOT CONFORM{Bcolors.ENDC}')
+                raise UserError(f'invalid subject id: {subject_id}')
 
         sub_path = os.path.join(target_root_path, subject_id, ses_path)
         if not os.path.exists(sub_path):
@@ -592,8 +575,8 @@ def bids_acquisition_download(data_root_path='',
                 raise TypeError("seqs_to_retrieve must be a Collection")
         else:
             seqs_to_retrieve = []
-        print("Scans for ", nip)
-        print(json.dumps(seqs_to_retrieve))
+        logger.info("to_import for %s on %s: %s", nip, acq_date,
+                    json.dumps(seqs_to_retrieve))
         # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
         if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
@@ -602,7 +585,6 @@ def bids_acquisition_download(data_root_path='',
         # download data, store information in batch files for anat/fmri
         # download data for meg data
         for value in seqs_to_retrieve:
-            # ~ print(seqs_to_retrieve)
             def get_value(key, text):
                 m = re.search(key + '-(.+?)_', text)
                 if m:
@@ -636,7 +618,7 @@ def bids_acquisition_download(data_root_path='',
                     acquisition_db.get_database_path(subject_info['location']),
                     nip, acq_date, value[0]
                 )
-                print(meg_file)
+                logger.info(meg_file)
                 filename = get_bids_file_descriptor(subject_id,
                                                     task_id=run_task,
                                                     run_id=run_id,
@@ -649,7 +631,6 @@ def bids_acquisition_download(data_root_path='',
                                                     fa_id=fa_id,
                                                     file_type='tif')
                 # ~ output_path = os.path.join(target_path, filename)
-                # ~ print(output_path)
                 # ~ shutil.copyfile(meg_file, output_path)
                 raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
 
@@ -673,19 +654,14 @@ def bids_acquisition_download(data_root_path='',
                     continue
                 path_file_glob = os.path.join(
                     nip_dir, '{0:06d}_*'.format(int(value[0])))
-                # ~ print(path_file_glob)
                 dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
                     list_warning.append("file not found "
                                         + path_file_glob)
-                    # ~ print(message)
-                    # ~ download_report.write(message)
                 elif download:
                     dicom_path = dicom_paths[0]
                     list_imported.append("\n IMPORTATION OF " + dicom_path)
-                    # ~ print(message)
-                    # ~ download_report.write(message)
                     # Expecting page 10 bids specification file name
                     filename = get_bids_file_descriptor(subject_id,
                                                         task_id=run_task,
@@ -700,7 +676,7 @@ def bids_acquisition_download(data_root_path='',
                                                         file_type='nii')
 
                     if value[1] == 'anat' and deface:
-                        print("\n Deface with pydeface")
+                        logger.info("\n Deface with pydeface")
                         files_for_pydeface.append(
                             os.path.join(target_path, filename))
 
@@ -729,7 +705,6 @@ def bids_acquisition_download(data_root_path='',
                             }})
 
                     if len(value) == 4:
-                        # ~ print('value[3]', value[3] )
                         filename_json = os.path.join(target_path,
                                                      filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
@@ -746,34 +721,40 @@ def bids_acquisition_download(data_root_path='',
     with open(dcm2nii_batch_file, 'w') as f:
         yaml.dump(dcm2nii_batch, f)
 
-    print("\n" + "-" * 80)
-    print("-" * 25 + "    SUMMARY OF IMPORTATION    " + "-" * 25)
-    print("-" * 80)
+    report_lines = ["-" * 80]
     for i in list_already_imported:
-        print(i)
+        report_lines.append(i)
         download_report.write(i)
-    print("\n" + "-" * 80)
+    report_lines.append("\n" + "-" * 80)
     for i in list_imported:
-        print(i)
+        report_lines.append(i)
         download_report.write(i)
-    print("\n" + "-" * 80)
-    print(Bcolors.WARNING, end='')
+    report_lines.append("\n" + "-" * 80)
+    logger.info("Summary of importation:\n%s", "\n".join(report_lines))
+
+    report_lines = []
     for i in list_warning:
-        print('\n  WARNING: ' + i)
+        report_lines.append('- ' + i)
         download_report.write('\n  WARNING: ' + i)
-    print(Bcolors.ENDC)
-    print("-" * 80 + "\n" + "-" * 80)
+    if report_lines:
+        logger.warning("Warnings:\n%s", "\n".join(report_lines))
     download_report.close()
 
+    if list_warning:
+        do_continue = yes_no(f'There are {len(list_warning)} warnings (see '
+                             'above. Do you want to ignore them and continue?',
+                             default='no', noninteractive=False)
+        if not do_continue:
+            logger.fatal('Aborting upon user request.')
+            return 1
+
     if dry_run:
-        print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
+        logger.info("no importation, dry-run option is enabled")
     else:
-        print('\n')
         cmd = ("dcm2niibatch", dcm2nii_batch_file)
         ret = subprocess.call(cmd)
         if ret != 0:
-            print(f'{Bcolors.FAIL}dcm2niibatch returned an error, see above'
-                  f'{Bcolors.ENDC}')
+            logger.error('dcm2niibatch returned an error, see above')
 
         # loop for checking if downloaded are ok and create the downloaded
         # files
@@ -862,8 +843,9 @@ def bids_acquisition_download(data_root_path='',
 
 def main(argv=sys.argv):
     global NONINTERACTIVE
+    prog = os.path.basename(argv[0])
     if sys.version_info < (3, 6):
-        print('ERROR: neurospin_to_bids needs Python 3.6 or later')
+        sys.stderr.write(f'ERROR: {prog} needs Python 3.6 or later\n')
         return 1
     # Parse arguments from console
     parser = argparse.ArgumentParser(
@@ -890,11 +872,34 @@ def main(argv=sys.argv):
     parser.add_argument('--noninteractive', action='store_true',
                         help='Do not request interactive input from the '
                         'terminal')
+    parser.add_argument('--debug', dest='logging_level', action='store_const',
+                        const=logging.DEBUG, default=logging.INFO,
+                        help='Enable debugging messages')
 
     # LOAD CONSOLE ARGUMENTS
     args = parser.parse_args(argv[1:])
+
+    # Configure logging to a file + colorized logging on stderr
+    report_dir = os.path.join(args.root_path, 'report')
+    os.makedirs(report_dir, exist_ok=True)
+    logging.basicConfig(
+        level=min(args.logging_level, logging.INFO),
+        filename=os.path.join(report_dir, 'neurospin_to_bids.log'),
+        filemode='a',
+    )
+    root_logger = logging.getLogger()
+    formatter = logging.Formatter(f'{prog}: %(levelname)s: %(message)s')
+    from logutils.colorize import ColorizingStreamHandler
+    handler = ColorizingStreamHandler(sys.stderr)
+    handler.setFormatter(formatter)
+    handler.setLevel(args.logging_level)
+    root_logger.addHandler(handler)
+
+    logger.info('Started %s', ' '.join(shlex.quote(arg) for arg in argv))
+
     NONINTERACTIVE = args.noninteractive
     acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
+
     deface = yes_no('\nDo you want deface T1?', default=None,
                     noninteractive=False)
     try:
@@ -906,7 +911,7 @@ def main(argv=sys.argv):
                                          deface=deface,
                                          dry_run=args.dry_run) or 0
     except UserError as exc:
-        print('USER ERROR, aborting: {0}'.format(exc))
+        logger.fatal('aborting due to user error: {0}'.format(exc))
         return 1
 
 
