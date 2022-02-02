@@ -3,9 +3,13 @@
 """Tools for working with the NeuroSpin DICOM archive."""
 
 import glob
+import logging
 import os.path
 
 from .utils import DataError, UserError
+
+
+logger = logging.getLogger()
 
 
 NEUROSPIN_DATABASES = {
@@ -47,6 +51,21 @@ def get_database_path(scanner):
 # • spaces, tab, newline and null character
 FILENAME_ILLEGAL_CHARS = '\\/:*?"<>|_ \t\r\n\0'
 FILENAME_CLEANUP_TABLE = {ord(char): '-' for char in FILENAME_ILLEGAL_CHARS}
+
+GLOB_SPECIAL_CHARS = '*?[!]'
+GLOB_CLEANUP_TABLE = {ord(char): '-'
+                      for char in (set(FILENAME_ILLEGAL_CHARS)
+                                   - set(GLOB_SPECIAL_CHARS))}
+
+
+def canonicalize_filename(text):
+    """Canonicalize a string by replacing illegal characters with '-'."""
+    return text.translate(FILENAME_CLEANUP_TABLE)
+
+
+def canonicalize_glob_pattern(pattern):
+    """Canonicalize a glob pattern by replacing illegal characters with '-'."""
+    return pattern.translate(GLOB_CLEANUP_TABLE)
 
 
 def get_session_path(scanner, acq_date, nip):

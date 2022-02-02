@@ -113,7 +113,7 @@ def validate_element_to_import(value):
                               "must be a string (offending value is {!r})"
                               .format(value[2]))
     try:
-        bids.validate_bids_basename(value[2])
+        bids.validate_bids_partial_name(value[2])
         if len(value) > 3:
             bids.validate_metadata_dict(value)
     except bids.BIDSError as exc:
@@ -126,35 +126,42 @@ MANDATORY_COLUMNS = [
     'location',
 ]
 
-COLUMN_NAMES = MANDATORY_COLUMNS + [
+ALL_COLUMN_NAMES = [
+    'subject_label',
+    'NIP',
     'infos_participant',
     'session_label',
+    'acq_date',
+    # 'acq_label',   ## part of acq_date, should we implement it again???
+    'location',
     'to_import',
 ]
 
 
-def iterate_participants_to_import(exp_info_path, filename=None, strict=False):
-    """Read participants_to_import.tsv, returning each line as a dictionary.
+def find_participants_to_import_tsv(exp_info_path, strict=False):
+    """Find participants_to_import.tsv, in the exp_info directory.
 
     - exp_info_path (str) is the path to the exp_info directory which normally
     contains participants_to_import.tsv
-
-    - filename (str or None) is the name of the participants_to_import.tsv
-    file. In the normal case this is None, and the two names are used by
-    decreasing of priority: 'participants_to_import.tsv' or 'participants.tsv'
-    (the old, deprecated name for that file).
     """
     if not os.path.exists(exp_info_path):
         raise UserError('exp_info directory not found')
     if os.path.isfile(os.path.join(exp_info_path,
                                    'participants_to_import.tsv')):
-        filename = os.path.join(exp_info_path, 'participants_to_import.tsv')
+        return os.path.join(exp_info_path, 'participants_to_import.tsv')
     elif os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
         # Legacy name of participants_to_import.tsv
-        filename = os.path.join(exp_info_path, 'participants.tsv')
+        return os.path.join(exp_info_path, 'participants.tsv')
     else:
         raise UserError('exp_info/participants_to_import.tsv not found')
 
+
+def iterate_participants_list(filename, strict=False):
+    """Read participants_to_import.tsv, returning each line as a dictionary.
+
+    - filename (str) is the path to the participants_to_import.tsv
+    file.
+    """
     with open(filename, encoding='utf-8', newline='') as csv_file:
         reader = csv.DictReader(csv_file, dialect=bids.BIDSTSVDialect)
 
@@ -164,15 +171,19 @@ def iterate_participants_to_import(exp_info_path, filename=None, strict=False):
             if column not in reader.fieldnames:
                 raise UserError('missing column %s in %s', column, filename)
         subject_label_header = reader.fieldnames[0]
-        if subject_label_header in COLUMN_NAMES:
+        if subject_label_header in set(ALL_COLUMN_NAMES) - {'subject_label'}:
             raise UserError('the first column of %s must contain the '
                             'subject label, not %s', filename,
                             subject_label_header)
 
         for row in reader:
             try:
-                row['subject_label'] = parse_bids_entity(
-                    row[subject_label_header].strip(), key='sub')
+                try:
+                    row['subject_label'] = parse_bids_entity(
+                        row[subject_label_header].strip(), key='sub')
+                except ValidationError as exc:
+                    raise ValidationError(
+                        f'invalid subject_label: {exc}') from exc
                 if subject_label_header != 'subject_label':
                     del row[subject_label_header]
 
@@ -185,9 +196,13 @@ def iterate_participants_to_import(exp_info_path, filename=None, strict=False):
                     logger.warning('%s, line %d: %s', filename,
                                    reader.line_num, exc)
 
-                if 'session_label' in row:
-                    row['session_label'] = parse_bids_entity(
-                        row['session_label'].strip(), key='ses')
+                if row.get('session_label'):
+                    try:
+                        row['session_label'] = parse_bids_entity(
+                            row['session_label'].strip(), key='ses')
+                    except ValidationError as exc:
+                        raise ValidationError(
+                            f'invalid session_label: {exc}') from exc
 
                 try:
                     row['infos_participant'] = json.loads(
@@ -218,7 +233,7 @@ def iterate_participants_to_import(exp_info_path, filename=None, strict=False):
             except ValidationError as exc:
                 if strict:
                     raise UserError(f'in {filename}, line {reader.line_num}: '
-                                    f'{exc}')
+                                    f'{exc}') from exc
                 else:
                     logger.error('in %s, skipping line %d: %s', filename,
                                  reader.line_num, exc)

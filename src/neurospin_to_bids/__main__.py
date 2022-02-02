@@ -493,7 +493,8 @@ def bids_acquisition_download(data_root_path='',
 
     # Read the participants_to_import.tsv file for getting subjects/sessions to
     # download
-    for subject_info in exp_info.iterate_participants_to_import(exp_info_path):
+    pti_filename = exp_info.find_participants_to_import_tsv(exp_info_path)
+    for subject_info in exp_info.iterate_participants_list(pti_filename):
         logger.debug('Now handling:\n%s', subject_info)
         subject_id = subject_info['subject_label']
 
