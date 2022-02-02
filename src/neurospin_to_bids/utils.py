@@ -22,3 +22,20 @@ class DataError(Exception):
     Contains a message describing the error.
     """
     pass
+
+
+PREFIX_LENGTH = 20
+LINE_LENGTH = 60
+
+
+def pinpoint_json_error(json_decode_error):
+    """Construct a user-readable message from a JSON parse error."""
+    pos = json_decode_error.pos
+    doc = json_decode_error.doc
+    start = pos - (PREFIX_LENGTH)
+    if start < 0:
+        return (doc[:LINE_LENGTH]
+                + '\n' + ' ' * pos + '^ ' + json_decode_error.msg)
+    else:
+        return ('...' + doc[start:(start+LINE_LENGTH-len('...'))]
+                + '\n' + ' ' * (pos-start) + '^ ' + json_decode_error.msg)

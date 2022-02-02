@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import collections.abc
 import glob
 import json
 import logging
@@ -13,7 +12,6 @@ import shutil
 import subprocess
 import sys
 import time
-from ast import literal_eval
 from collections import OrderedDict
 from itertools import combinations
 from pathlib import Path
@@ -495,18 +493,12 @@ def bids_acquisition_download(data_root_path='',
 
     # Read the participants_to_import.tsv file for getting subjects/sessions to
     # download
-    pop = exp_info.read_participants_to_import(exp_info_path)
-
-    for _unused_index, subject_info in pop.iterrows():
+    for subject_info in exp_info.iterate_participants_to_import(exp_info_path):
         logger.debug('Now handling:\n%s', subject_info)
-        subject_id = subject_info[0].strip()
+        subject_id = subject_info['subject_label']
 
         # Fill the partcipant information for the participants_to_import.tsv
-        if subject_info.get('infos_participant', '').strip():
-            info_participant = json.loads(
-                subject_info['infos_participant'].strip())
-        else:
-            info_participant = {}
+        info_participant = subject_info['infos_participant']
         if subject_id in dic_info_participants:
             existing_items = dic_info_participants[subject_id]
             # Existing items take precedence over new values
@@ -518,21 +510,8 @@ def bids_acquisition_download(data_root_path='',
         # optional_filters = [('sub', subject_id)]
         # if session_id is not None:
         #  optional_filters += [('ses', session_id)]
-        if subject_info.get('session_label', '').strip():
-            session_id = subject_info['session_label'].strip()
-        else:
-            session_id = None
-        if session_id is None:
-            ses_path = ''
-        else:
-            ses_path = 'ses-' + session_id
-
-        if subject_id.isnumeric():
-            int(subject_id)
-            subject_id = 'sub-{0}'.format(subject_id)
-        else:
-            if 'sub-' not in subject_id:
-                raise UserError(f'invalid subject id: {subject_id}')
+        ses_path = subject_info.get('session_label', '')
+        session_id = ses_path[len('ses-'):]
 
         sub_path = os.path.join(target_root_path, subject_id, ses_path)
         if not os.path.exists(sub_path):
@@ -544,12 +523,11 @@ def bids_acquisition_download(data_root_path='',
             if os.path.isfile(check_file):
                 continue
 
-        # DATE has to be transformed from BIDS to NeuroSpin server standard
-        # NeuroSpin standard is yyyymmdd -> Bids standard is YYYY-MM-DD
-        acq_date = subject_info['acq_date'].strip().replace('-', '')
+        # Date in format used by /neurospin/acquisition: YYYYMMDD
+        acq_date = subject_info['acq_date'].strftime('%Y%m%d')
 
         # nip number
-        nip = subject_info['NIP'].strip()
+        nip = subject_info['NIP']
 
         # Get appropriate download file. As specific as possible
         # ~ specs_path = file_manager_default_file(exp_info_path,
@@ -568,15 +546,9 @@ def bids_acquisition_download(data_root_path='',
         # value[0] : num of seq
         # value[1] : modality
         # value[2] : part of ht file_name
-        to_import = subject_info['to_import'].strip()
-        if to_import:
-            seqs_to_retrieve = literal_eval(to_import)
-            if not isinstance(seqs_to_retrieve, collections.abc.Collection):
-                raise TypeError("seqs_to_retrieve must be a Collection")
-        else:
-            seqs_to_retrieve = []
-        logger.info("to_import for %s on %s: %s", nip, acq_date,
-                    json.dumps(seqs_to_retrieve))
+        seqs_to_retrieve = subject_info['to_import']
+        logger.debug("to_import for %s on %s: %s", nip, acq_date,
+                     json.dumps(seqs_to_retrieve))
         # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
         if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
@@ -585,6 +557,12 @@ def bids_acquisition_download(data_root_path='',
         # download data, store information in batch files for anat/fmri
         # download data for meg data
         for value in seqs_to_retrieve:
+            try:
+                exp_info.validate_element_to_import(value)
+            except exp_info.ValidationError as exc:
+                logger.error('for subject %s on %s, skipping import of a '
+                             'sequence: %s', nip, acq_date, str(exc))
+
             def get_value(key, text):
                 m = re.search(key + '-(.+?)_', text)
                 if m:
@@ -616,7 +594,7 @@ def bids_acquisition_download(data_root_path='',
 
                 meg_file = os.path.join(
                     acquisition_db.get_database_path(subject_info['location']),
-                    nip, acq_date, value[0]
+                    nip, subject_info['acq_date'].strftime('%y%m%d'), value[0]
                 )
                 logger.info(meg_file)
                 filename = get_bids_file_descriptor(subject_id,
@@ -894,6 +872,7 @@ def main(argv=sys.argv):
     handler.setFormatter(formatter)
     handler.setLevel(args.logging_level)
     root_logger.addHandler(handler)
+    logging.captureWarnings(True)
 
     logger.info('Started %s', ' '.join(shlex.quote(arg) for arg in argv))
 
