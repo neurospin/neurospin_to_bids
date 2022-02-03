@@ -640,7 +640,7 @@ def bids_acquisition_download(data_root_path='',
                                         + path_file_glob)
                 elif download:
                     dicom_path = dicom_paths[0]
-                    list_imported.append("\n IMPORTATION OF " + dicom_path)
+                    list_imported.append("importation of " + dicom_path)
                     # Expecting page 10 bids specification file name
                     filename = get_bids_file_descriptor(subject_id,
                                                         task_id=run_task,
@@ -670,7 +670,7 @@ def bids_acquisition_download(data_root_path='',
 
                     if os.path.isfile(is_file_to_import):
                         list_already_imported.append(
-                            f" ALREADY IMPORTED: {is_file_to_import}")
+                            f"already imported: {is_file_to_import}")
                     else:
                         infiles_dcm2nii.append(file_to_convert)
 
@@ -704,11 +704,12 @@ def bids_acquisition_download(data_root_path='',
     for i in list_already_imported:
         report_lines.append(i)
         download_report.write(i)
-    report_lines.append("\n" + "-" * 80)
+    if list_already_imported:
+        report_lines.append("-" * 80)
     for i in list_imported:
         report_lines.append(i)
         download_report.write(i)
-    report_lines.append("\n" + "-" * 80)
+    report_lines.append("-" * 80)
     logger.info("Summary of importation:\n%s", "\n".join(report_lines))
 
     report_lines = []
@@ -716,7 +717,8 @@ def bids_acquisition_download(data_root_path='',
         report_lines.append('- ' + i)
         download_report.write('\n  WARNING: ' + i)
     if report_lines:
-        logger.warning("Warnings:\n%s", "\n".join(report_lines))
+        logger.warning("Warnings:\n%s\n%s\n%s",
+                       "-" * 80, "\n".join(report_lines), "-" * 80)
     download_report.close()
 
     if list_warning:
