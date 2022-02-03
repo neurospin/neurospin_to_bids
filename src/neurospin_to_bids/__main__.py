@@ -851,6 +851,8 @@ def main(argv=sys.argv):
     parser.add_argument('--noninteractive', action='store_true',
                         help='Do not request interactive input from the '
                         'terminal')
+    parser.add_argument('--autolist', action='store_true',
+                        help='Try to use the experimental autolist feature')
     parser.add_argument('--debug', dest='logging_level', action='store_const',
                         const=logging.DEBUG, default=logging.INFO,
                         help='Enable debugging messages')
@@ -880,9 +882,13 @@ def main(argv=sys.argv):
     NONINTERACTIVE = args.noninteractive
     acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
 
-    deface = yes_no('\nDo you want deface T1?', default=None,
-                    noninteractive=False)
     try:
+        if args.autolist:
+            from . import autolist
+            autolist.autolist_dicom(os.path.join(args.root_path, 'exp_info'))
+            return
+        deface = yes_no('\nDo you want deface T1?', default=None,
+                        noninteractive=False)
         return bids_acquisition_download(data_root_path=args.root_path,
                                          dataset_name=args.dataset_name,
                                          force_download=False,

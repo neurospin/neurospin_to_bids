@@ -100,3 +100,21 @@ def get_session_path(scanner, acq_date, nip):
                         dirs_found=", ".join(os.path.basename(dir)
                                              for dir in nip_dirs))
             )
+
+
+def list_dicom_series(session_dir):
+    """Generator listing the DICOM series in a given session directory.
+
+    Each series is returned as a (SeriesNumber, SeriesDescription) pair. The
+    SeriesDescription is extracted from the directory name, and canonicalized
+    using canonicalize_filename(). The series are returned in no particular
+    order.
+    """
+    for directory in os.listdir(session_dir):
+        try:
+            series_number, series_description = directory.split('_', 1)
+        except ValueError:
+            logger.warning('invalid series directory name %s', directory)
+        series_number = int(series_number)
+        series_description = canonicalize_filename(series_description)
+        yield (series_number, series_description)
