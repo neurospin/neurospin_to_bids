@@ -17,7 +17,6 @@ import yaml
 from . import acquisition_db
 from . import bids
 from . import exp_info
-from .utils import DataError
 
 
 logger = logging.getLogger(__name__)
@@ -55,21 +54,34 @@ def _generate_autolist_dicom_lines(exp_info_path):
     for subject_info in exp_info.iterate_participants_list(
             os.path.join(exp_info_path, 'participants_list.tsv')):
         logger.debug('Now autolisting:\n%s', subject_info)
-        try:
-            # TODO: try to disambiguate multiple sessions automatically, by
-            # finding if one of them has no match.
-            session_dir = acquisition_db.get_session_path(
-                subject_info['location'],
-                subject_info['acq_date'].strftime('%Y%m%d'),
-                subject_info['NIP'],
-            )
-        except DataError as exc:
-            logger.error(str(exc))
-            # TODO: fail fast in strict mode, using the warnings module
-            continue
-        # TODO implement reading of to_import for manual overrides
-        subject_info['to_import'] = list(
-            autolist_dicom_session(session_dir, autolist_config))
+        location = subject_info['location']
+        acq_date = subject_info['acq_date'].strftime('%Y%m%d')
+        nip = subject_info['NIP']
+        session_dirs = acquisition_db.get_session_paths(
+            location, acq_date, nip)
+        if len(session_dirs) == 0:
+            logger.error('no session directory found for NIP %s in %s', nip,
+                         exp_info.get_session_paths(location, acq_date, nip))
+        # Try to disambiguate multiple sessions automatically, by finding if
+        # one of them has no match.
+        to_import = []
+        sessions_found = 0
+        for session_dir in session_dirs:
+            # TODO implement reading of to_import for manual overrides
+            to_import_for_session = list(
+                autolist_dicom_session(session_dir, autolist_config))
+            if len(to_import_for_session) != 0:
+                if sessions_found == 0:
+                    to_import = to_import_for_session
+                    nip = os.path.basename(session_dir)
+                elif sessions_found == 1:
+                    logger.error('multiple session directories match the '
+                                 'given NIP %s: %s', subject_info['NIP'],
+                                 session_dirs)
+                    to_import = []
+                sessions_found += 1
+        subject_info['NIP'] = nip
+        subject_info['to_import'] = to_import
         yield subject_info
 
 

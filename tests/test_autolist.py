@@ -10,11 +10,14 @@ import neurospin_to_bids.exp_info
 
 def test_autolist_mri(tmp_path, monkeypatch):
     ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
-               / 'aa000001-001_001')
+               / 'aa000001-0001_001')
     (ses_dir / '000003_mprage-sag-T1').mkdir(parents=True)
     (ses_dir / '000004_mbepi-3mm-PA').mkdir()
     (ses_dir / '000008_b0-gre-field-mapping').mkdir()
     (ses_dir / '000009_b0-gre-field-mapping').mkdir()
+    decoy_ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
+                     / 'aa000001-0001_002')
+    decoy_ses_dir.mkdir()
     exp_info_dir = tmp_path / 'exp_info'
     exp_info_dir.mkdir()
     with (exp_info_dir / 'participants_list.tsv').open(mode='w') as f:
@@ -64,7 +67,7 @@ def test_autolist_mri(tmp_path, monkeypatch):
     assert len(generated_list) == 1
     assert generated_list[0] == {
         'subject_label': 'sub-01',
-        'NIP': 'aa000001',
+        'NIP': 'aa000001-0001_001',
         'infos_participant': {},
         'session_label': '',
         'acq_date': datetime.date(2000, 1, 1),

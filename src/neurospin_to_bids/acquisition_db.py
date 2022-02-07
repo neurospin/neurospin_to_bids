@@ -77,29 +77,49 @@ def get_session_path(scanner, acq_date, nip):
         optionally be suffixed with the session number and StudyID for
         disambiguation.
     """
+    session_paths = get_session_paths(scanner, acq_date, nip)
+    if len(session_paths) == 1:
+        return session_paths[0]
+    elif len(session_paths) == 0:
+        raise DataError(
+            f"no directory found for given NIP {nip} in {scanner} on "
+            f"{acq_date}"
+        )
+    else:
+        raise DataError(
+            "multiple paths for given NIP {nip} in {scanner} on {acq_date}: "
+            "[{dirs_found}] - please mention the session of the subject "
+            "for this date after the NIP, 2 sessions for the same subject "
+            "the same day are possible."
+            .format(nip=nip, scanner=scanner, acq_date=acq_date,
+                    dirs_found=", ".join(os.path.basename(dir)
+                                         for dir in session_paths))
+        )
+
+
+def get_session_paths(scanner, acq_date, nip):
+    """Get the path to the directory containg data from acquisition session(s)
+
+    scanner (str): valid choices are the members of NEUROSPIN_DATABASES.keys()
+    acq_date (str): the acquisition date in YYYYMMDD format
+    nip (str): the subject's NIP (personal identification number), which may
+        optionally be suffixed with the session number and StudyID for
+        disambiguation.
+
+    A list is returned, which can be of zero length if no such session can be
+    found.
+    """
     db_path = get_database_path(scanner)
     if scanner.lower() == 'meg':
-        return os.path.join(db_path, nip, acq_date)
+        session_dir = os.path.join(db_path, nip, acq_date)
+        if os.path.isdir(session_dir):
+            return [session_dir]
+        else:
+            return []
     else:  # MRI
         date_dir = os.path.join(db_path, acq_date)
-        nip_dirs = glob.glob(os.path.join(glob.escape(date_dir),
-                                          glob.escape(nip) + '*'))
-        if len(nip_dirs) == 1:
-            return nip_dirs[0]
-        elif len(nip_dirs) == 0:
-            raise DataError(
-                f"no directory found for given NIP {nip} in {date_dir}"
-            )
-        else:
-            raise DataError(
-                "multiple paths for given NIP {nip} in {date_dir}: "
-                "[{dirs_found}] - please mention the session of the subject "
-                "for this date after the NIP, 2 sessions for the same subject "
-                "the same day are possible."
-                .format(nip=nip, date_dir=date_dir,
-                        dirs_found=", ".join(os.path.basename(dir)
-                                             for dir in nip_dirs))
-            )
+        return glob.glob(os.path.join(glob.escape(date_dir),
+                                      glob.escape(nip) + '*'))
 
 
 def list_dicom_series(session_dir):
