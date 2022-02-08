@@ -15,6 +15,10 @@ def test_autolist_mri(tmp_path, monkeypatch):
     (ses_dir / '000004_mbepi-3mm-PA').mkdir()
     (ses_dir / '000008_b0-gre-field-mapping').mkdir()
     (ses_dir / '000009_b0-gre-field-mapping').mkdir()
+    (ses_dir / '000012_mbepi-3mm-PA').mkdir()
+    (ses_dir / '000014_interleaved').mkdir()
+    (ses_dir / '000015_interleaved').mkdir()
+    (ses_dir / '000016_interleaved').mkdir()
     decoy_ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
                      / 'aa000001-0001_002')
     decoy_ses_dir.mkdir()
@@ -34,7 +38,7 @@ def test_autolist_mri(tmp_path, monkeypatch):
                 {
                     "SeriesDescription": "mbepi*",
                     "data_type": "func",
-                    "bids_name": "task-rest_bold",
+                    "bids_name": "task-rest_run-1_bold",
                     "metadata": {
                         "TaskName": "rest",
                     },
@@ -50,6 +54,15 @@ def test_autolist_mri(tmp_path, monkeypatch):
                             "bids_name": "phasediff",
                         },
                     ]
+                },
+                {
+                    "SeriesDescription": "interleaved",
+                    "data_type": "anat",
+                    "bids_name": "T2w",
+                    "repetitions": [
+                        "acq-il1",
+                        "acq-il2",
+                    ],
                 },
             ]
         }, f)
@@ -74,9 +87,13 @@ def test_autolist_mri(tmp_path, monkeypatch):
         'location': 'prisma',
         'to_import': [
             [3, 'anat', 'T1w'],
-            [4, 'func', 'task-rest_bold', {'TaskName': 'rest'}],
+            [4, 'func', 'task-rest_run-1_bold', {'TaskName': 'rest'}],
             [8, 'fmap', 'magnitude1'],
             [9, 'fmap', 'phasediff'],
+            [12, 'func', 'task-rest_run-2_bold', {'TaskName': 'rest'}],
+            [14, 'anat', 'acq-il1_run-1_T2w'],
+            [15, 'anat', 'acq-il2_T2w'],
+            [16, 'anat', 'acq-il1_run-2_T2w'],
         ],
     }
 

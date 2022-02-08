@@ -13,10 +13,41 @@ import warnings
 logger = logging.getLogger(__name__)
 
 
-BIDS_PARTIAL_NAME_RE = re.compile(r'^((?P<entities>[a-zA-Z0-9]+-[^_]+_)*|_?)'
-                                  r'(?P<suffix>[a-zA-Z0-9]+)'
-                                  r'(\.(?P<ext>\..+))?$')
+# Information below is based on this version of BIDS
+BIDS_SPEC_VERSION = '1.6.0'
+
+BIDS_PARTIAL_NAME_RE = re.compile(r'^_?(?P<entities>([a-zA-Z0-9]+-[^_.]*_?)*)'
+                                  r'(?P<suffix>[a-zA-Z0-9]+)?'
+                                  r'(?P<ext>\..*)?$')
 BIDS_LABEL_RE = re.compile(r'^[a-zA-Z0-9]+$')
+
+# See Appendix IV of the BIDS Specification, or the Derivatives section.
+BIDS_ENTITY_ORDER = [
+    'sub',    # MRI
+    'ses',    # MRI
+    'task',   # MRI
+    'acq',    # MRI
+    'ce',     # MRI
+    'trc',    # PET: between 'task' and 'rec'
+    'rec',    # MRI
+    'dir',    # MRI
+    'run',    # MRI
+    'proc',   # MEG: between 'run' and 'space'
+    'mod',    # MRI
+    'echo',   # MRI
+    'flip',   # MRI
+    'inv',    # MRI
+    'mt',     # MRI
+    'part',   # MRI
+    'recording',  # MRI
+    'hemi',   # derived: after source entities, before 'space'
+    'space',  # derived: after 'hemi'; MEG: between 'proc' and 'split'
+    'split',  # MEG: after 'space'
+    'res',    # derived: between 'space' and 'den'
+    'den',    # derived: between 'res' and 'label'
+    'label',  # derived: between 'den' and 'desc'
+    'desc',   # derived: after 'label'
+]
 
 
 class BIDSError(Exception):
@@ -66,25 +97,43 @@ def validate_bids_partial_name(name):
 
 
 def parse_bids_partial_name(name):
-    """Parse the base name of a BIDS file (entities, suffix, extension).
-
-    The partial name must include at least the suffix. It may optionally
-    include entities and a file extension.
-    """
+    """Parse any part of a BIDS basename (entities, suffix, extension)."""
     match = BIDS_PARTIAL_NAME_RE.match(name)
     if not match:
         raise BIDSError(f"the target file name {name} cannot be parsed "
                         f"according to BIDS".format(name))
     entities_list = []
-    entities_text = match.group('entities')
+    entities_text = match.group('entities').rstrip('_')
     if entities_text:
-        entities_text = entities_text[:-1]  # strip trailing '_'
         for entity in entities_text.split('_'):
             key, value = entity.split('-', 1)
             entities_list.append((key, value))
     return (collections.OrderedDict(entities_list),
-            match.group('suffix'),
-            match.group('ext'))
+            match.group('suffix') or '',
+            match.group('ext') or '')
+
+
+def compose_bids_name(entities, suffix, ext):
+    """Compose a BIDS name from a entities, suffix, and extension.
+
+    entities can be of type collections.OrderedDict, or simply a list of (key,
+    value) pairs. Beware that the entities are used in the order that they are
+    provided. In particular, an unordered 'dict' (Python < 3.8) is not
+    suitable and will raise an error.
+    """
+    # We actually want to test if 'entities' has an ordered type, but
+    # Reversible is the closest that we have.
+    assert isinstance(entities, collections.abc.Reversible)
+    if isinstance(entities, collections.abc.Mapping):
+        entities_items = entities.items()
+    else:
+        entities_items = entities
+    name = '_'.join(f'{key}-{value}' for key, value in entities_items)
+    if suffix:
+        name += '_' + suffix
+    if ext:
+        name += ext
+    return name
 
 
 def validate_bids_label(label):
@@ -106,3 +155,36 @@ def _validate_metadata_dict(value):
                         "to_import must be a JSON object (a python "
                         "dict with string keys and JSON-compatible "
                         "values)")
+
+
+def add_entities(bids_basename, new_entities_str):
+    """Add entities to a BIDS name."""
+    entities, suffix, ext = parse_bids_partial_name(bids_basename)
+    new_entities, _, _ = parse_bids_partial_name(new_entities_str)
+    # First pass: replace existing entity values
+    for key in new_entities:
+        if key in entities:
+            value = new_entities.pop(key)
+            logger.warning('replacing %s-%s with %s-%s',
+                           key, entities[key], key, value)
+            entities[key] = value
+    # Second pass: add new entities
+    entities_list = list(entities.items())
+    for key, value in new_entities.items():
+        insertion_pos = _find_insertion_position(entities_list, key)
+        entities_list.insert(insertion_pos, (key, value))
+    return compose_bids_name(entities_list, suffix, ext)
+
+
+def _find_insertion_position(entity_list, key):
+    try:
+        key_index = BIDS_ENTITY_ORDER.index(key)
+    except ValueError:
+        return len(entity_list)  # insert unknown entities last
+    # Look for the first key in entity_list that precedes the key, in the sense
+    # of BIDS_ENTITY_ORDER, and return its index + 1.
+    entity_list_keys = {k: i for i, (k, v) in enumerate(entity_list)}
+    for candidate_key in reversed(BIDS_ENTITY_ORDER[:key_index]):
+        if candidate_key in entity_list_keys:
+            return entity_list_keys[candidate_key] + 1
+    return 0

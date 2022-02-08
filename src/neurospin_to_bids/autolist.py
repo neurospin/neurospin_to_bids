@@ -8,6 +8,7 @@
 
 import csv
 import fnmatch
+import itertools
 import json
 import logging
 import os
@@ -89,11 +90,9 @@ def autolist_dicom_session(session_dir, autolist_config):
     """Generate rules for the to_import column for a given session."""
     series_list = sorted(acquisition_db.list_dicom_series(session_dir))
     logger.debug('List of DICOM series in %s: %s', session_dir, series_list)
-    to_import = list(_autolist_dicom_first_pass(series_list, autolist_config))
-
-    # TODO next pass: handle repetitions
-
-    return to_import
+    match_list = list(_autolist_dicom_first_pass(series_list, autolist_config))
+    _autolist_handle_repetitions(match_list, autolist_config)
+    return _autolist_generate_to_import(match_list)
 
 
 def rule_matches(rule, series_description):
@@ -165,7 +164,68 @@ def _autolist_dicom_first_pass(series_list, autolist_config):
 
                 logger.debug('first pass rule: %d -> %s/%s',
                              series_number, data_type, bids_name)
-                if metadata:
-                    yield (series_number, data_type, bids_name, metadata)
-                else:
-                    yield (series_number, data_type, bids_name)
+                yield dict(series_number=series_number,
+                           data_type=data_type,
+                           bids_name=bids_name,
+                           metadata=metadata,
+                           rule_index=rule_index)
+
+
+def _autolist_handle_repetitions(series_list, autolist_config,
+                                 add_runs_only=False):
+    """Remove duplicate target files by adding a repetition attribute.
+
+    The add_runs_only parameter is used for recursively calling this function.
+    """
+    target_bids_names = {s['bids_name'] for s in series_list}
+    for raw_bids_name in target_bids_names:
+        repeated_series = [s for s in series_list
+                           if s['bids_name'] == raw_bids_name]
+        repetition_count = len(repeated_series)
+        assert repetition_count != 0
+        if repetition_count == 1:
+            continue  # no repetitions
+        # Should be sorted already, but let's make sure that it is
+        repeated_series = sorted(repeated_series,
+                                 key=lambda s: s['series_number'])
+        rule_index = repeated_series[0]['rule_index']
+        rule = autolist_config['rules'][rule_index]
+        if 'repetitions' in rule and not add_runs_only:
+            repetition_entities = rule['repetitions']
+            if 'run-' in repetition_entities:
+                # FIXME: potential remaining duplicates if run- is used in
+                # rule['repetitions']
+                logger.error('The "repetitions" key should not contain '
+                             '"run-", the resulting BIDS names are not '
+                             'guaranteed to be unique')
+        else:
+            repetition_entities = ['run-{}'.format(i)
+                                   for i in range(1, repetition_count+1)]
+        for series_desc, entities in zip(
+                repeated_series, itertools.cycle(repetition_entities)):
+            if series_desc['rule_index'] != rule_index:
+                logger.warning('autolist: treating similarly-named series %d '
+                               'and %d (%s) as repetitions, even though they '
+                               'match different rules',
+                               repeated_series[0]['series_number'],
+                               series_desc['series_number'],
+                               raw_bids_name)
+            new_name = bids.add_entities(series_desc['bids_name'], entities)
+            logger.debug('Repetition: renaming %s to %s',
+                         series_desc['bids_name'], new_name)
+            series_desc['bids_name'] = new_name
+    if not add_runs_only:
+        _autolist_handle_repetitions(series_list, autolist_config,
+                                     add_runs_only=True)
+
+
+def _autolist_generate_to_import(series_list):
+    for series_desc in series_list:
+        series_number = series_desc['series_number']
+        data_type = series_desc['data_type']
+        bids_name = series_desc['bids_name']
+        metadata = series_desc.get('metadata')
+        if metadata:
+            yield (series_number, data_type, bids_name, metadata)
+        else:
+            yield (series_number, data_type, bids_name)
