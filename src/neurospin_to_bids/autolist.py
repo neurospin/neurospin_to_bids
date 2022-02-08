@@ -61,8 +61,8 @@ def _generate_autolist_dicom_lines(exp_info_path):
         session_dirs = acquisition_db.get_session_paths(
             location, acq_date, nip)
         if len(session_dirs) == 0:
-            logger.error('no session directory found for NIP %s in %s', nip,
-                         exp_info.get_session_paths(location, acq_date, nip))
+            logger.error('no directory found for given NIP %s in %s on %s',
+                         nip, location, acq_date)
         # Try to disambiguate multiple sessions automatically, by finding if
         # one of them has no match.
         to_import = []
