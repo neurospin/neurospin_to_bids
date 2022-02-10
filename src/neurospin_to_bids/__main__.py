@@ -6,7 +6,6 @@ import glob
 import json
 import logging
 import os
-import re
 import shlex
 import shutil
 import subprocess
@@ -17,7 +16,6 @@ from itertools import combinations
 from pathlib import Path
 
 import mne
-import numpy as np
 import pandas as pd
 import yaml
 import pydeface.utils as pdu
@@ -26,6 +24,7 @@ from mne_bids import make_dataset_description, write_raw_bids
 import pkg_resources
 
 from . import acquisition_db
+from . import bids
 from . import exp_info
 from .utils import DataError, UserError
 
@@ -227,59 +226,6 @@ def get_bids_path(data_root_path='',
         session_id = 'ses-' + session_id
     return os.path.join(data_root_path, 'sub-' + subject_id, session_id,
                         folder)
-
-
-def get_bids_file_descriptor(subject_id,
-                             task_id=None,
-                             session_id=None,
-                             acq_label=None,
-                             dir_label=None,
-                             rec_id=None,
-                             fa_id=None,
-                             part_label=None,
-                             echo_id=None,
-                             run_id=None,
-                             run_dir=None,
-                             file_tag=None,
-                             file_type=None):
-    """ Creates a filename descriptor following BIDS.
-
-    subject_id refers to the subject label
-    task_id refers to the task label
-    run_id refers to run index
-    acq_label refers to acquisition parameters as a label
-    rec_id refers to reconstruction parameters as a label
-    part_label refers to magnitude and phase parts of the images
-    echo_id refers to the index of the echo time
-    fa_id refers to the index of the used flip angle
-    """
-    if 'sub-' or 'sub' in subject_id:
-        descriptor = subject_id
-    else:
-        descriptor = 'sub-{0}'.format(subject_id)
-    if (session_id is not None) and (session_id is not np.nan):
-        descriptor += '_ses-{0}'.format(session_id)
-    if (task_id is not None) and (task_id is not np.nan):
-        descriptor += '_task-{0}'.format(task_id)
-    if (acq_label is not None) and (acq_label is not np.nan):
-        descriptor += '_acq-{0}'.format(acq_label)
-    if (echo_id is not None) and (echo_id is not np.nan):
-        descriptor += '_echo-{0}'.format(echo_id)
-    if (part_label is not None) and (part_label is not np.nan):
-        descriptor += '_part-{0}'.format(part_label)
-    if (fa_id is not None) and (fa_id is not np.nan):
-        descriptor += '_fa-{0}'.format(fa_id)
-    if (dir_label is not None) and (dir_label is not np.nan):
-        descriptor += '_dir-{0}'.format(dir_label)
-    if (rec_id is not None) and (rec_id is not np.nan):
-        descriptor += '_rec-{0}'.format(rec_id)
-    if (run_dir is not None) and (run_dir is not np.nan):
-        descriptor += '_dir-{0}'.format(run_dir)
-    if (run_id is not None) and (run_id is not np.nan):
-        descriptor += '_run-{0}'.format(run_id)
-    if (file_tag is not None) and (file_type is not None):
-        descriptor += '_{0}.{1}'.format(file_tag, file_type)
-    return descriptor
 
 
 def get_bids_default_path(data_root_path='', dataset_name=None):
@@ -497,25 +443,18 @@ def bids_acquisition_download(data_root_path='',
     pti_filename = exp_info.find_participants_to_import_tsv(exp_info_path)
     for subject_info in exp_info.iterate_participants_list(pti_filename):
         logger.debug('Now handling:\n%s', subject_info)
-        subject_id = subject_info['subject_label']
+        sub_entity = subject_info['subject_label']
+        ses_entity = subject_info.get('session_label', '')
 
         # Fill the partcipant information for the participants_to_import.tsv
         info_participant = subject_info['infos_participant']
-        if subject_id in dic_info_participants:
-            existing_items = dic_info_participants[subject_id]
+        if sub_entity in dic_info_participants:
+            existing_items = dic_info_participants[sub_entity]
             # Existing items take precedence over new values
             info_participant.update(existing_items)
-        dic_info_participants[subject_id] = info_participant
+        dic_info_participants[sub_entity] = info_participant
 
-        # sub_path = target_root_path + subject_id + ses_path
-        # Mange the optional filters
-        # optional_filters = [('sub', subject_id)]
-        # if session_id is not None:
-        #  optional_filters += [('ses', session_id)]
-        ses_path = subject_info.get('session_label', '')
-        session_id = ses_path[len('ses-'):]
-
-        sub_path = os.path.join(target_root_path, subject_id, ses_path)
+        sub_path = os.path.join(target_root_path, sub_entity, ses_entity)
         if not os.path.exists(sub_path):
             os.makedirs(sub_path)
 
@@ -530,18 +469,6 @@ def bids_acquisition_download(data_root_path='',
 
         # nip number
         nip = subject_info['NIP']
-
-        # Get appropriate download file. As specific as possible
-        # ~ specs_path = file_manager_default_file(exp_info_path,
-        # ~                                        optional_filters,
-        # ~                                        'download',
-        # ~                                        file_type='tsv',
-        # ~                                        allow_other_fields=False)
-        # ~ report_line = '%s,%s,%s\n' % (subject_id, session_id, specs_path)
-        # ~ download_report.write(report_line)
-
-        # ~ specs = pd.read_csv(specs_path, dtype=str, sep='\t',
-        # ~                     index_col=False)
 
         # Retrieve list of list for seqs to import
         # One tuple is configured as :(file_to_import;acq_folder;acq_name)
@@ -565,27 +492,13 @@ def bids_acquisition_download(data_root_path='',
                 logger.error('for subject %s on %s, skipping import of a '
                              'sequence: %s', nip, acq_date, str(exc))
 
-            def get_value(key, text):
-                m = re.search(key + '-(.+?)_', text)
-                if m:
-                    return m.group(1)
-                else:
-                    return None
-
-            run_task = get_value('task', value[2])
-            acq_label = get_value('acq', value[2])
-            run_id = get_value('run', value[2])
-            run_dir = get_value('dir', value[2])
-            echo_id = get_value('echo', value[2])
-            part_label = get_value('part', value[2])
-            fa_id = get_value('fa', value[2])
-            run_session = session_id
-
-            tag = value[2].split('_')[-1]
-
             target_path = os.path.join(sub_path, value[1])
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
+
+            target_filename = bids.add_entities(value[2],
+                                                sub_entity + '_' + ses_entity)
+            logger.debug('%s -> %s', value[2], target_filename)
 
             # MEG CASE
             if value[1] == 'meg':
@@ -599,22 +512,11 @@ def bids_acquisition_download(data_root_path='',
                     nip, subject_info['acq_date'].strftime('%y%m%d'), value[0]
                 )
                 logger.info(meg_file)
-                filename = get_bids_file_descriptor(subject_id,
-                                                    task_id=run_task,
-                                                    run_id=run_id,
-                                                    run_dir=run_dir,
-                                                    session_id=run_session,
-                                                    file_tag=tag,
-                                                    acq_label=acq_label,
-                                                    echo_id=echo_id,
-                                                    part_label=part_label,
-                                                    fa_id=fa_id,
-                                                    file_type='tif')
-                # ~ output_path = os.path.join(target_path, filename)
-                # ~ shutil.copyfile(meg_file, output_path)
+
                 raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
 
-                write_raw_bids(raw, filename, target_path, overwrite=True)
+                write_raw_bids(raw, target_filename, target_path,
+                               overwrite=True)
                 # add event
                 # create json file
                 # copy the subject emptyroom
@@ -642,32 +544,21 @@ def bids_acquisition_download(data_root_path='',
                 elif download:
                     dicom_path = dicom_paths[0]
                     list_imported.append("importation of " + dicom_path)
-                    # Expecting page 10 bids specification file name
-                    filename = get_bids_file_descriptor(subject_id,
-                                                        task_id=run_task,
-                                                        run_id=run_id,
-                                                        run_dir=run_dir,
-                                                        session_id=run_session,
-                                                        file_tag=tag,
-                                                        acq_label=acq_label,
-                                                        echo_id=echo_id,
-                                                        part_label=part_label,
-                                                        fa_id=fa_id,
-                                                        file_type='nii')
 
                     if value[1] == 'anat' and deface:
                         logger.info("\n Deface with pydeface")
                         files_for_pydeface.append(
-                            os.path.join(target_path, filename))
+                            os.path.join(target_path, target_filename))
 
                     # append list for preparing the batch importation
                     file_to_convert = {
                         'in_dir': dicom_path,
                         'out_dir': target_path,
-                        'filename': os.path.splitext(filename)[0]
+                        'filename': os.path.splitext(target_filename)[0]
                     }
                     is_file_to_import = os.path.join(
-                        os.path.join(os.getcwd(), target_path, filename))
+                        os.path.join(os.getcwd(), target_path,
+                                     target_filename))
 
                     if os.path.isfile(is_file_to_import):
                         list_already_imported.append(
@@ -675,18 +566,20 @@ def bids_acquisition_download(data_root_path='',
                     else:
                         infiles_dcm2nii.append(file_to_convert)
 
-                    # Add descriptor into the json file
-                    if run_task:
-                        filename_json = os.path.join(target_path,
-                                                     filename[:-3] + 'json')
+                    # Add descriptor(s) into the json file
+                    filename_json = os.path.join(
+                        target_path,
+                        os.path.splitext(target_filename)[0] + '.json'
+                    )
+                    entities, _, _ = bids.parse_bids_name(target_filename)
+                    task = entities.get('task')
+                    if task:
                         dict_descriptors.update(
                             {filename_json: {
-                                'TaskName': run_task
+                                'TaskName': task,
                             }})
 
                     if len(value) == 4:
-                        filename_json = os.path.join(target_path,
-                                                     filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
         # Importation and conversion of dicom files

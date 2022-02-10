@@ -89,14 +89,14 @@ def validate_bids_partial_name(name):
     entities is not checked at the moment, but may be added in the future.
 
     """
-    entities, suffix, ext = parse_bids_partial_name(name)
+    entities, suffix, ext = parse_bids_name(name)
     for key, value in entities.items():
         if not BIDS_LABEL_RE.match(value):
             warnings.warn(f'value for the BIDS entity {key}-{value} should '
                           'contain alphanumeric characters only', BIDSWarning)
 
 
-def parse_bids_partial_name(name):
+def parse_bids_name(name):
     """Parse any part of a BIDS basename (entities, suffix, extension)."""
     match = BIDS_PARTIAL_NAME_RE.match(name)
     if not match:
@@ -159,8 +159,8 @@ def _validate_metadata_dict(value):
 
 def add_entities(bids_basename, new_entities_str):
     """Add entities to a BIDS name."""
-    entities, suffix, ext = parse_bids_partial_name(bids_basename)
-    new_entities, _, _ = parse_bids_partial_name(new_entities_str)
+    entities, suffix, ext = parse_bids_name(bids_basename)
+    new_entities, _, _ = parse_bids_name(new_entities_str)
     # First pass: replace existing entity values
     for key in new_entities:
         if key in entities:
