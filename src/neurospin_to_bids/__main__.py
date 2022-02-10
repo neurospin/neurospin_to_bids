@@ -12,7 +12,6 @@ import subprocess
 import sys
 import time
 from collections import OrderedDict
-from itertools import combinations
 from pathlib import Path
 
 import mne
@@ -75,102 +74,6 @@ def yes_no(question: str, *,
         print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
 
 
-def file_manager_default_file(main_path,
-                              filter_list,
-                              file_tag,
-                              file_type='*',
-                              allow_other_fields=True):
-    """Path to the most specific file with respect to optional filters.
-
-    Each filter is a list [key, value]. Like [sub, 01] or [ses, 02].
-
-    Following BIDS standard files can be of the form
-    [key-value_]...[key-value_]file_tag.file_type.
-    """
-    filters = []
-    for n in reversed(range(1, len(filter_list) + 1)):
-        filters += combinations(filter_list, n)
-    filters += [[]]
-    for filt in filters:
-        found = get_bids_files(main_path,
-                               sub_folder=False,
-                               file_type=file_type,
-                               file_tag=file_tag,
-                               filters=filt,
-                               allow_other_fields=allow_other_fields)
-        if found:
-            return found[0]
-    return None
-
-
-def file_reference(img_path):
-    reference = {}
-    reference['file_path'] = img_path
-    reference['file_basename'] = os.path.basename(img_path)
-    parts = reference['file_basename'].split('_')
-    tag, typ = parts[-1].split('.', 1)
-    reference['file_tag'] = tag
-    reference['file_type'] = typ
-    reference['file_fields'] = ''
-    reference['fields_ordered'] = []
-    for part in parts[:-1]:
-        reference['file_fields'] += part + '_'
-        field, value = part.split('-')
-        reference['fields_ordered'].append(field)
-        reference[field] = value
-    return reference
-
-
-def get_bids_files(main_path,
-                   file_tag='*',
-                   file_type='*',
-                   sub_id='*',
-                   file_folder='*',
-                   filters=None,
-                   ref=False,
-                   sub_folder=True,
-                   allow_other_fields=True):
-    """Return files following bids spec
-
-    Filters are of the form (key, value). Only one filter per key allowed.
-    A file for which a filter do not apply will be discarded.
-    """
-    if sub_folder:
-        files = os.path.join(main_path, 'sub-*', 'ses-*')
-        if glob.glob(files):
-            files = os.path.join(
-                main_path, 'sub-%s' % sub_id, 'ses-*', file_folder,
-                'sub-%s*_%s.%s' % (sub_id, file_tag, file_type))
-        else:
-            files = os.path.join(
-                main_path, 'sub-%s' % sub_id, file_folder,
-                'sub-%s*_%s.%s' % (sub_id, file_tag, file_type))
-    else:
-        files = os.path.join(main_path, '*%s.%s' % (file_tag, file_type))
-
-    files = glob.glob(files)
-    files.sort()
-    if filters:
-        if not allow_other_fields:
-            files = [
-                file_ for file_ in files
-                if len(os.path.basename(file_).split('_')) <= len(filters) + 1
-            ]
-        files = [file_reference(file_) for file_ in files]
-        for key, value in filters:
-            files = [
-                file_ for file_ in files
-                if (key in file_ and file_[key] == value)
-            ]
-    else:
-        files = [file_reference(file_) for file_ in files]
-
-    if ref:
-        return files
-    else:
-        return [ref_file['file_path'] for ref_file in files]
-
-
 def bids_copy_events(behav_path='exp_info/recorded_events',
                      data_root_path='',
                      dataset_name=None):
@@ -214,18 +117,6 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
                 ext = ''.join(list_tmp)
                 shutil.copyfile(os.path.join(file_path, file_name),
                                 os.path.join(data_path, ext, file_name))
-
-
-def get_bids_path(data_root_path='',
-                  subject_id='01',
-                  folder='',
-                  session_id=None):
-    if session_id is None:
-        session_id = ''
-    else:
-        session_id = 'ses-' + session_id
-    return os.path.join(data_root_path, 'sub-' + subject_id, session_id,
-                        folder)
 
 
 def get_bids_default_path(data_root_path='', dataset_name=None):
