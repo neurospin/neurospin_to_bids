@@ -733,16 +733,16 @@ def bids_acquisition_download(data_root_path='',
                         dict_descriptors.update({filename_json: value[3]})
 
         # Importation and conversion of dicom files
-        dcm2nii_batch = dict(Options=dict(isGz='false',
-                                          isFlipY='false',
-                                          isVerbose='false',
-                                          isCreateBIDS='true',
-                                          isOnlySingleFile='false'),
+        dcm2nii_batch = dict(Options=dict(isGz=True,
+                                          isFlipY=False,
+                                          isVerbose=False,
+                                          isCreateBIDS=True,
+                                          isOnlySingleFile=False),
                              Files=infiles_dcm2nii)
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
-        _ = yaml.dump(dcm2nii_batch, f)
+        yaml.dump(dcm2nii_batch, f)
 
     print(
         "\n------------------------------------------------------------------------------------"
