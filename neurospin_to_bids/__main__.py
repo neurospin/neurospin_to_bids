@@ -423,6 +423,7 @@ def bids_acquisition_download(data_root_path='',
                               behav_path='exp_info/recorded_events',
                               copy_events=False,
                               deface=False,
+                              no_gz=False,
                               dry_run=False):
     """Automatically download files from neurospin server to a BIDS dataset.
 
@@ -733,7 +734,7 @@ def bids_acquisition_download(data_root_path='',
                         dict_descriptors.update({filename_json: value[3]})
 
         # Importation and conversion of dicom files
-        dcm2nii_batch = dict(Options=dict(isGz=True,
+        dcm2nii_batch = dict(Options=dict(isGz=(not no_gz),
                                           isFlipY=False,
                                           isVerbose=False,
                                           isCreateBIDS=True,
@@ -896,6 +897,8 @@ def main(argv=sys.argv):
                         default='/neurospin/acquisition',
                         help='path to the NeuroSpin acquisition archive '
                         '[default: /neurospin/acquisition]')
+    parser.add_argument('--no-gz', action='store_true',
+                        help='Disable gzip compression of the Nifti output')
     parser.add_argument('--dry-run', '-n', '-dry-run',
                         action='store_true',
                         help='Test without importation of data')
@@ -916,6 +919,7 @@ def main(argv=sys.argv):
                                          behav_path='exp_info/recorded_events',
                                          copy_events=args.copy_events,
                                          deface=deface,
+                                         no_gz=args.no_gz,
                                          dry_run=args.dry_run) or 0
     except UserError as exc:
         print('USER ERROR, aborting: {0}'.format(exc))
