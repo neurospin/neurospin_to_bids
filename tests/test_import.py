@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import collections.abc
 import shutil
 
 import neurospin_to_bids.__main__
+
+import yaml
 
 
 def test_simple_import_mri(tmp_path):
@@ -25,6 +28,24 @@ def test_simple_import_mri(tmp_path):
         '--root-path', str(tmp_path)
     ])
     assert ret == 0
+
+    with (exp_info_dir / 'batch_dcm2nii.yaml').open() as f:
+        batch = yaml.safe_load(f)
+    assert isinstance(batch, collections.abc.Mapping)
+    assert 'Options' in batch
+    assert 'Files' in batch
+    assert batch['Files'] == [
+        {
+            'filename': 'sub-01_T1w',
+            'in_dir': str(ses_dir / '000003_mprage-sag-T1'),
+            'out_dir': str(tmp_path / 'rawdata' / 'sub-01' / 'anat'),
+        },
+        {
+            'filename': 'sub-01_task-rest_bold',
+            'in_dir': str(ses_dir / '000004_mbepi-3mm-PA'),
+            'out_dir': str(tmp_path / 'rawdata' / 'sub-01' / 'func'),
+        },
+    ]
 
 
 def test_simple_import_mri_invalid_sequence(tmp_path):
