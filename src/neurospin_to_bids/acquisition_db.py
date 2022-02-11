@@ -29,6 +29,12 @@ a laptop.
 """
 
 
+def set_root_path(root_path):
+    """Set the acquisition root path globally for the current process."""
+    global ACQUISITION_ROOT_PATH
+    ACQUISITION_ROOT_PATH = root_path
+
+
 def get_database_path(scanner):
     """Get the full path to the database corresponding to the given scanner.
 
