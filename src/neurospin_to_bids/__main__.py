@@ -433,7 +433,7 @@ def bids_acquisition_download(data_root_path='',
 
         # Importation and conversion of dicom files
         dcm2nii_batch = dict(Options=dict(isGz=(not no_gz),
-                                          isFlipY=False,
+                                          isFlipY=True,  # default is True
                                           isVerbose=False,
                                           isCreateBIDS=True,
                                           isOnlySingleFile=False),
