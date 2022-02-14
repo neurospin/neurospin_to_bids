@@ -424,6 +424,7 @@ def bids_acquisition_download(data_root_path='',
                               copy_events=False,
                               deface=False,
                               no_gz=False,
+                              data_orientation='default',
                               dry_run=False):
     """Automatically download files from neurospin server to a BIDS dataset.
 
@@ -734,12 +735,16 @@ def bids_acquisition_download(data_root_path='',
                         dict_descriptors.update({filename_json: value[3]})
 
         # Importation and conversion of dicom files
-        dcm2nii_batch = dict(Options=dict(isGz=(not no_gz),
-                                          isFlipY=True,  # default is True
-                                          isVerbose=False,
-                                          isCreateBIDS=True,
-                                          isOnlySingleFile=False),
-                             Files=infiles_dcm2nii)
+        dcm2nii_batch = {
+            'Options': {
+                'isGz': not no_gz,
+                'isFlipY': data_orientation != 'dicom',  # default is True
+                'isVerbose': False,
+                'isCreateBIDS': True,
+                'isOnlySingleFile': False
+            },
+            'Files': infiles_dcm2nii,
+        }
 
     dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
     with open(dcm2nii_batch_file, 'w') as f:
@@ -899,6 +904,18 @@ def main(argv=sys.argv):
                         '[default: /neurospin/acquisition]')
     parser.add_argument('--no-gz', action='store_true',
                         help='Disable gzip compression of the Nifti output')
+    parser.add_argument('--dicom-orientation', dest='data_orientation',
+                        action='store_const', const='dicom', default='default',
+                        help='Use the DICOM convention for internal data '
+                        'orientation in the resulting NIfTI files. The '
+                        'default is to reorient the images to a direct '
+                        'referential by flipping the rows. This option is NOT '
+                        'recommended, as it leads to non-standard NIfTI files '
+                        'and problems with X-flipped diffusion vectors. '
+                        'It is included for compatibility with existing '
+                        'databases since it was the behaviour of '
+                        'neurospin_to_bids from January 2020 to February '
+                        '2022.')
     parser.add_argument('--dry-run', '-n', '-dry-run',
                         action='store_true',
                         help='Test without importation of data')
@@ -913,14 +930,17 @@ def main(argv=sys.argv):
     deface = yes_no('\nDo you want deface T1?', default=None,
                     noninteractive=False)
     try:
-        return bids_acquisition_download(data_root_path=args.root_path,
-                                         dataset_name=args.dataset_name,
-                                         force_download=False,
-                                         behav_path='exp_info/recorded_events',
-                                         copy_events=args.copy_events,
-                                         deface=deface,
-                                         no_gz=args.no_gz,
-                                         dry_run=args.dry_run) or 0
+        return bids_acquisition_download(
+            data_root_path=args.root_path,
+            dataset_name=args.dataset_name,
+            force_download=False,
+            behav_path='exp_info/recorded_events',
+            copy_events=args.copy_events,
+            deface=deface,
+            no_gz=args.no_gz,
+            data_orientation=args.data_orientation,
+            dry_run=args.dry_run
+        ) or 0
     except UserError as exc:
         print('USER ERROR, aborting: {0}'.format(exc))
         return 1
