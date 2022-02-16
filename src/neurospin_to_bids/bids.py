@@ -142,7 +142,7 @@ def validate_bids_label(label):
                         f'alphanumeric characters only (1 or more)')
 
 
-def _validate_metadata_dict(value):
+def validate_metadata_dict(value):
     """Validate the additional metadata in each element of to_import."""
     if not isinstance(value[3], dict):
         raise BIDSError("the fourth value of each element of to_import "
