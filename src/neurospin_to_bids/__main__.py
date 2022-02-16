@@ -217,9 +217,6 @@ def bids_acquisition_download(data_root_path='',
     The bids dataset is created if necessary before download with some
     empty mandatory files to be filled like README in case they don't exist.
 
-    The download depends on the file '[sub-*_][ses-*_]download.csv' contained
-    in the folder 'exp_info'.
-
     NIP and acq date of the subjects will be taken automatically from
     exp_info/participants_to_import.tsv file that follows bids standard. The
     file will be copied in the dataset folder without the NIP column for
@@ -347,7 +344,6 @@ def bids_acquisition_download(data_root_path='',
 
             target_filename = bids.add_entities(value[2],
                                                 sub_entity + '_' + ses_entity)
-            logger.debug('%s -> %s', value[2], target_filename)
 
             # MEG CASE
             if value[1] == 'meg':
