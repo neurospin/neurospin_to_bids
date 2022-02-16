@@ -370,9 +370,9 @@ def bids_acquisition_download(data_root_path='',
                 # create json file
                 # copy the subject emptyroom
 
-            # ANAT and FUNC case
+            # MRI CASE
             # todo: bad practices, to refactor for the sake of simplicity
-            elif value[1] in ('anat', 'func', 'dwi', 'fmap'):
+            else:
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
