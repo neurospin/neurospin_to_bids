@@ -25,6 +25,7 @@ import pkg_resources
 from . import acquisition_db
 from . import bids
 from . import exp_info
+from . import postprocess
 from . import utils
 from .utils import DataError, UserError, yes_no
 
@@ -505,6 +506,14 @@ def bids_acquisition_download(data_root_path='',
         ret = subprocess.call(cmd)
         if ret != 0:
             logger.error('dcm2niibatch returned an error, see above')
+
+        for file_to_convert in infiles_dcm2nii:
+            generated_files = glob.glob(os.path.join(
+                file_to_convert['out_dir'],
+                file_to_convert['filename'] + '*'))
+            for filename in generated_files:
+                if not filename.endswith('.json'):
+                    postprocess.rename_file_with_postfixes(filename)
 
         # loop for checking if downloaded are ok and create the downloaded
         # files
