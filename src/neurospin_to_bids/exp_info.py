@@ -179,8 +179,14 @@ def iterate_participants_list(filename, strict=False):
         for row in reader:
             try:
                 try:
-                    row['subject_label'] = parse_bids_entity(
-                        row[subject_label_header].strip(), key='sub')
+                    # The new subject_label item must be first in the output
+                    # OrderedDict, so we must recreate it.
+                    new_row = collections.OrderedDict({
+                        'subject_label': parse_bids_entity(
+                            row[subject_label_header].strip(), key='sub')
+                    })
+                    new_row.update(row)
+                    row = new_row
                 except ValidationError as exc:
                     raise ValidationError(
                         f'invalid subject_label: {exc}') from exc
