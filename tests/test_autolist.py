@@ -82,7 +82,6 @@ def test_autolist_mri(tmp_path, monkeypatch):
         'subject_label': 'sub-01',
         'NIP': 'aa000001-0001_001',
         'infos_participant': {},
-        'session_label': '',
         'acq_date': datetime.date(2000, 1, 1),
         'location': 'prisma',
         'to_import': [

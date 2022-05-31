@@ -36,10 +36,16 @@ def autolist_dicom(exp_info_path):
     """
     filename = os.path.join(exp_info_path, 'participants_to_import.tsv')
     with open(filename, 'x', encoding='utf-8') as csv_file:
-        writer = csv.DictWriter(csv_file, dialect=bids.BIDSTSVDialect,
-                                fieldnames=exp_info.ALL_COLUMN_NAMES)
-        writer.writeheader()
+        first = True
         for subject_info in _generate_autolist_dicom_lines(exp_info_path):
+            if first:
+                # We use the list of columns that were read from the input
+                # participants_list.tsv, so we have to wait until the first
+                # item in order to initialize the writer.
+                writer = csv.DictWriter(csv_file, dialect=bids.BIDSTSVDialect,
+                                        fieldnames=subject_info.keys())
+                writer.writeheader()
+                first = False
             subject_info['infos_participant'] = json.dumps(
                 subject_info['infos_participant'])
             subject_info['to_import'] = json.dumps(

@@ -21,7 +21,8 @@ BIDS_PARTIAL_NAME_RE = re.compile(r'^_?(?P<entities>([a-zA-Z0-9]+-[^_.]*_?)*)'
                                   r'(?P<ext>\..*)?$')
 BIDS_LABEL_RE = re.compile(r'^[a-zA-Z0-9]+$')
 
-# See Appendix IV of the BIDS Specification, or the Derivatives section.
+# See Appendix IX of the BIDS v1.6.0 Specification, and also Appendix IV and
+# the Derivatives section.
 BIDS_ENTITY_ORDER = [
     'sub',    # MRI
     'ses',    # MRI
@@ -32,7 +33,6 @@ BIDS_ENTITY_ORDER = [
     'rec',    # MRI
     'dir',    # MRI
     'run',    # MRI
-    'proc',   # MEG: between 'run' and 'space'
     'mod',    # MRI
     'echo',   # MRI
     'flip',   # MRI
@@ -40,6 +40,7 @@ BIDS_ENTITY_ORDER = [
     'mt',     # MRI
     'part',   # MRI
     'recording',  # MRI
+    'proc',   # MEG: between 'run' and 'space'
     'hemi',   # derived: after source entities, before 'space'
     'space',  # derived: after 'hemi'; MEG: between 'proc' and 'split'
     'split',  # MEG: after 'space'
@@ -161,19 +162,36 @@ def add_entities(bids_basename, new_entities_str):
     """Add entities to a BIDS name."""
     entities, suffix, ext = parse_bids_name(bids_basename)
     new_entities, _, _ = parse_bids_name(new_entities_str)
+    entities = set_entities(entities, new_entities)
+    return compose_bids_name(entities, suffix, ext)
+
+
+def set_entities(base_entities, new_entities, override_policy='override'):
+    # TODO: ensure base_entities is an OrderedDicts
     # First pass: replace existing entity values
-    for key in new_entities:
-        if key in entities:
-            value = new_entities.pop(key)
-            logger.warning('replacing %s-%s with %s-%s',
-                           key, entities[key], key, value)
-            entities[key] = value
+    for key, value in new_entities.items():
+        if key in base_entities:
+            if override_policy == 'override':
+                pass
+            elif override_policy == 'warn':
+                logger.warning('replacing %s-%s with %s-%s',
+                               key, base_entities[key], key, value)
+            elif override_policy == 'raise':
+                raise RuntimeError(f'entity {key} already exists and '
+                                   'overriding is disabled')
+            else:
+                raise ValueError('invalid value for override_policy')
+            base_entities[key] = value
     # Second pass: add new entities
-    entities_list = list(entities.items())
+    entities_list = list(base_entities.items())
     for key, value in new_entities.items():
         insertion_pos = _find_insertion_position(entities_list, key)
         entities_list.insert(insertion_pos, (key, value))
-    return compose_bids_name(entities_list, suffix, ext)
+    return collections.OrderedDict(entities_list)
+
+
+def insert_entity(base_entities, key, value):
+    return set_entities(base_entities, {key: value})
 
 
 def _find_insertion_position(entity_list, key):

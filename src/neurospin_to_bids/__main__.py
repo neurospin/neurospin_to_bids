@@ -25,6 +25,7 @@ import pkg_resources
 from . import acquisition_db
 from . import bids
 from . import exp_info
+from . import postprocess
 from . import utils
 from .utils import DataError, UserError, yes_no
 
@@ -110,6 +111,7 @@ def bids_init_dataset(data_root_path='',
     # CHECK DATASET REPOSITORY
     dataset_name, dataset_name_path = get_bids_default_path(
         data_root_path, dataset_name)
+
     if not os.path.exists(dataset_name_path):
         os.makedirs(dataset_name_path)
 
@@ -241,6 +243,7 @@ def bids_acquisition_download(data_root_path='',
     # Determine target path with the name of dataset
     dataset_name, target_root_path = get_bids_default_path(
         data_root_path, dataset_name)
+    _, sourcedata_path = get_bids_default_path(data_root_path, 'sourcedata')
 
     # Create dataset directories and files if necessary
     bids_init_dataset(data_root_path, dataset_name)
@@ -301,6 +304,8 @@ def bids_acquisition_download(data_root_path='',
         dic_info_participants[sub_entity] = info_participant
 
         sub_path = os.path.join(target_root_path, sub_entity, ses_entity)
+        sourcedata_sub_path = os.path.join(sourcedata_path,
+                                           sub_entity, ses_entity)
         if not os.path.exists(sub_path):
             os.makedirs(sub_path)
 
@@ -339,6 +344,8 @@ def bids_acquisition_download(data_root_path='',
                              'sequence: %s', nip, acq_date, str(exc))
 
             target_path = os.path.join(sub_path, value[1])
+            sourcedata_target_path = os.path.join(sourcedata_sub_path,
+                                                  value[1])
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
 
@@ -411,6 +418,26 @@ def bids_acquisition_download(data_root_path='',
                     else:
                         infiles_dcm2nii.append(file_to_convert)
 
+                    # Create the symlink in sourcedata
+                    sourcedata_link = os.path.join(sourcedata_target_path,
+                                                   file_to_convert['filename'])
+                    try:
+                        link_already_exists = os.path.samefile(sourcedata_link,
+                                                               dicom_path)
+                    except FileNotFoundError:
+                        link_already_exists = False
+                    if not link_already_exists:
+                        try:
+                            if os.path.islink(sourcedata_link):
+                                os.unlink(sourcedata_link)
+                            os.makedirs(sourcedata_target_path, exist_ok=True)
+                            os.symlink(dicom_path, sourcedata_link,
+                                       target_is_directory=True)
+                        except OSError:
+                            logger.error('could not create a sourcedata '
+                                         'symlink %s -> %s',
+                                         sourcedata_target_path, dicom_path)
+
                     # Add descriptor(s) into the json file
                     filename_json = os.path.join(
                         target_path,
@@ -475,6 +502,14 @@ def bids_acquisition_download(data_root_path='',
         ret = subprocess.call(cmd)
         if ret != 0:
             logger.error('dcm2niibatch returned an error, see above')
+
+        for file_to_convert in infiles_dcm2nii:
+            generated_files = glob.glob(os.path.join(
+                file_to_convert['out_dir'],
+                file_to_convert['filename'] + '*'))
+            for filename in generated_files:
+                if not filename.endswith('.json'):
+                    postprocess.rename_file_with_postfixes(filename)
 
         # loop for checking if downloaded are ok and create the downloaded
         # files
