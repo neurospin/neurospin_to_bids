@@ -33,6 +33,9 @@ def test_simple_import_mri(tmp_path):
         batch = yaml.safe_load(f)
     assert isinstance(batch, collections.abc.Mapping)
     assert 'Options' in batch
+    assert batch['Options'].get('isFlipY', True) is True
+    assert batch['Options'].get('isGenerateBids', True) is True
+    assert batch['Options'].get('isGz', False) is True
     assert 'Files' in batch
     assert batch['Files'] == [
         {
