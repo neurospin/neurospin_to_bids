@@ -702,7 +702,7 @@ def bids_acquisition_download(data_root_path='',
                     if value[1] == 'anat' and deface:
                         print("\n Deface with pydeface")
                         files_for_pydeface.append(
-                            os.path.join(target_path, filename))
+                            os.path.join(target_path, filename + ".gz"))
 
                     # append list for preparing the batch importation
                     file_to_convert = {
