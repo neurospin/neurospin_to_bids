@@ -882,7 +882,7 @@ def bids_acquisition_download(data_root_path='',
     print('\n')
 
 
-def main(argv=sys.argv):
+def main(argv):
     global NONINTERACTIVE
     if sys.version_info < (3, 6):
         print('ERROR: neurospin_to_bids needs Python 3.6 or later')
