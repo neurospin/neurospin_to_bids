@@ -118,15 +118,17 @@ def file_manager_default_file(main_path,
 
 
 def file_reference(img_path):
-    reference = {}
-    reference['file_path'] = img_path
-    reference['file_basename'] = os.path.basename(img_path)
-    parts = reference['file_basename'].split('_')
+    file_basename = os.path.basename(img_path)
+    parts = file_basename.split('_')
     tag, typ = parts[-1].split('.', 1)
-    reference['file_tag'] = tag
-    reference['file_type'] = typ
-    reference['file_fields'] = ''
-    reference['fields_ordered'] = []
+    reference = {
+        'file_path': img_path,
+        'file_basename': os.path.basename(img_path),
+        'file_tag': tag,
+        'file_type': typ,
+        'file_fields': '',
+        'fields_ordered': [],
+    }
     for part in parts[:-1]:
         reference['file_fields'] += part + '_'
         field, value = part.split('-')
