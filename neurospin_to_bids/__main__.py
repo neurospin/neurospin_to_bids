@@ -882,11 +882,13 @@ def bids_acquisition_download(data_root_path='',
     print('\n')
 
 
-def main(argv):
+def main(argv=None):
     global NONINTERACTIVE
     if sys.version_info < (3, 6):
         print('ERROR: neurospin_to_bids needs Python 3.6 or later')
         return 1
+    if argv is None:
+        argv = sys.argv
     # Parse arguments from console
     parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
     parser.add_argument('--root-path', '-root_path',
