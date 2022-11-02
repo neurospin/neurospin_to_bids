@@ -79,7 +79,7 @@ When the **exp_info** directory is ready, you can launch the importation:
 
 The script is interactive. Many optional questions will be asked:
 *  Create or overwrite the dataset_description.json file (yes or no)
-*  Propose to setup the name of this.
+*  Propose to setup the name of this dataset.
 *  Propose to setup a list of authors.
 *  Propose to setup a list of acknowledgements.
 *  Propose to describe how to acknowledge this dataset OR a list of publications that should be cited.
@@ -88,10 +88,11 @@ The script is interactive. Many optional questions will be asked:
 *  Propose to create a README and/or CHANGES file(s).
 *  Deface T1 data.
 
-* The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
-    * ``-root_path``: specifies the target folder - by default the current directory.
-    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder ``rawdata`` of the target folder.
-    * ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
+
+The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
+* ``-root_path``: specifies the target folder - by default the current directory.
+* ``-dataset_name``: the folder name to export the dataset to, by default subfolder ``rawdata`` of the target folder.
+* ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
 
 If instead we were to specify the target folder (the one containing an
 `exp_info` subfolder) and a name for the BIDS dataset subfolder, we would
@@ -192,11 +193,10 @@ create the folders and file names in the BIDS dataset, every other column
 will be added to a new `participants.tsv` file included under the
 `rawdata` top folder.
 
-Which 'location'
-The location column corresponds to the MRI used. Three label are possible:
+The location column corresponds to the MRI used. Three labels are possible:
 * 'prisma' for Prisma_fit
 * 'trio' for 'database/TrioTim'
-* '7t' for Investigational_Device_7T 
+* '7t' for Investigational_Device_7T
 
 #### User case with 2 sessions the same day with the same participant
 For instance, if a participant undergoes an examination in the morning and in the afternoon,
