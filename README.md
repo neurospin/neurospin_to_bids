@@ -70,6 +70,38 @@ You have to store the information about subjects and data to import in a **exp_i
 
 See several small examples in [test_dataset/](test_dataset/). See also [https://github.com/neurospin/unicog/tree/master/unicogfmri/localizer_pypreprocess/scripts/exp_info](unicog/unicogfmri/localizer_pypreprocess/scripts/exp_info)
 
+# Importation of data
+
+When the **exp_info** directory is ready, you can launch the importation:
+
+        cd <path_where_is_exp_info>
+        neurospin_to_bids
+
+The script is interactive. Many optional questions will be asked:
+*  Create or overwrite the dataset_description.json file (yes or no)
+*  Propose to setup the name of this.
+*  Propose to setup a list of authors.
+*  Propose to setup a list of acknowledgements.
+*  Propose to describe how to acknowledge this dataset OR a list of publications that should be cited.
+*  List of sources of funding (e.g., grant numbers).
+*  The DOI for the dataset.
+*  Propose to create a README and/or CHANGES file(s).
+*  Deface T1 data.
+
+* The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
+    * ``-root_path``: specifies the target folder - by default the current directory.
+    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder ``rawdata`` of the target folder.
+    * ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
+
+If instead we were to specify the target folder (the one containing an
+`exp_info` subfolder) and a name for the BIDS dataset subfolder, we would
+run the command as follows:
+
+        neurospin_to_bids -root_path some_path -dataset_name my_dataset
+
+To read the script documentation you can write:
+
+        neurospin_to_bids -h
 
 ## Advanced importation
 
@@ -87,29 +119,6 @@ Here is an example:
             └── sub-02
                 └── func
                     └── sub-02_task-loc_events.tsv
-
-# Importation of data
-
-When the **exp_info** directory is ready, you can launch the importation:
-
-        cd <path_where_is_exp_info>
-        neurospin_to_bids
-
-* The `neurospin_to_bids` script will export files from the NeuroSpin archive based on the information contained in the **exp_info** directory. The script accepts three optional arguments:
-    * ``-root_path``: specifies the target folder - by default the current directory.
-    * ``-dataset_name``: the folder name to export the dataset to, by default subfolder ``rawdata`` of the target folder.
-    * ``-dry-run``: True/False - this mode will test the importaiton without to import data. A list of possible importation and warnings will be displayed.
-
-If instead we were to specify the target folder (the one containing an
-`exp_info` subfolder) and a name for the BIDS dataset subfolder, we would
-run the command as follows:
-
-        neurospin_to_bids -root_path some_path -dataset_name my_dataset
-
-To read the script documentation you can write:
-
-        neurospin_to_bids -h
-
 
 # Additional information
 
@@ -182,6 +191,12 @@ The _participant_label_ and _session_label_ are taken from this file to
 create the folders and file names in the BIDS dataset, every other column
 will be added to a new `participants.tsv` file included under the
 `rawdata` top folder.
+
+Which 'location'
+The location column corresponds to the MRI used. Three label are possible:
+* 'prisma' for Prisma_fit
+* 'trio' for 'database/TrioTim'
+* '7t' for Investigational_Device_7T 
 
 #### User case with 2 sessions the same day with the same participant
 For instance, if a participant undergoes an examination in the morning and in the afternoon,
