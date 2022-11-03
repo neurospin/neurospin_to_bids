@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Tools for working with the NeuroSpin DICOM archive."""
 
 import glob
