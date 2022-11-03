@@ -49,13 +49,13 @@ NONINTERACTIVE = False
 
 
 def yes_no(question: str, *,
-           default: str = None, noninteractive: bool = None) -> bool:
+           default: str = None, noninteractive: bool = False) -> bool:
     """A simple yes/no prompt
 
     Args:
         question (str): The question to be answered.
         default (bool, optional): Default answer to `question`.
-                                  Defaults to None.
+                                  Defaults to False.
 
     Raises:
         ValueError: Raise `ValueError` when default answer is not
@@ -66,7 +66,7 @@ def yes_no(question: str, *,
     """
     valid = {"yes": True, "y": True, "no": False, "n": False}
     if NONINTERACTIVE:
-        if noninteractive is not None:
+        if noninteractive:
             return noninteractive
         else:
             return valid[default]
