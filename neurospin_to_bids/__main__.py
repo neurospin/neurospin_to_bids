@@ -75,7 +75,12 @@ def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
         if noninteractive is not None:
             return noninteractive
         else:
-            return valid[default]
+            try:
+                return valid[default]
+            except KeyError:
+                raise ValueError("Missing or invalid default value, cannot "
+                                 "use noninteractive mode. You should use the "
+                                 "'default' or 'noninteractive' argument.")
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
