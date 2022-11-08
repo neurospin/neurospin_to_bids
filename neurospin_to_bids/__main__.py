@@ -48,14 +48,20 @@ class Bcolors:
 NONINTERACTIVE = False
 
 
-def yes_no(question: str, *,
-           default: str = None, noninteractive: bool = False) -> bool:
+def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
     """A simple yes/no prompt
 
     Args:
         question (str): The question to be answered.
-        default (bool, optional): Default answer to `question`.
-                                  Defaults to False.
+        default (optional): Default answer to `question`, selected if the user
+                            just hits the Enter key. Must be one of 'yes',
+                            'no', or None. Defaults to None, which means that
+                            there is no default answer, the user must type
+                            either yes or no before hitting Enter.
+        noninteractive (optional): value returned in non-interactive mode, must
+                                   be one of True or False. The default value
+                                   is None, which means that the returned value
+                                   is given by the 'default' argument.
 
     Raises:
         ValueError: Raise `ValueError` when default answer is not
@@ -66,10 +72,15 @@ def yes_no(question: str, *,
     """
     valid = {"yes": True, "y": True, "no": False, "n": False}
     if NONINTERACTIVE:
-        if noninteractive:
+        if noninteractive is not None:
             return noninteractive
         else:
-            return valid[default]
+            try:
+                return valid[default]
+            except KeyError:
+                raise ValueError("Missing or invalid default value, cannot "
+                                 "use noninteractive mode. You should use the "
+                                 "'default' or 'noninteractive' argument.")
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
@@ -392,7 +403,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_changes_file or not changes_file_exists:
         changes = yes_no('\nDo you want to create/overwrite the CHANGES file?',
-                         default="yes")
+                         default="yes", noninteractive=False)
         if changes:
             changes_input = input("Type your text: ")
             with open(changes_file, 'w', encoding="utf-8") as fid:
@@ -409,7 +420,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_readme_file or not readme_file_exist:
         readme = yes_no('\nDo you want to create/complete the README file?',
-                        default="yes")
+                        default="yes", noninteractive=False)
         if not readme:
             readme_input = "TO BE COMPLETED BY THE USER"
         else:
@@ -854,7 +865,8 @@ def bids_acquisition_download(data_root_path='',
 
         # Validate paths with BIDSValidator
         # see also http://bids-standard.github.io/bids-validator/
-        validation_bids = yes_no('\nDo you want to use a bids validator?')
+        validation_bids = yes_no('\nDo you want to use a bids validator?',
+                                 default=None, noninteractive=False)
         if validation_bids:
             bids_validation_report = os.path.join(report_path,
                                                   "report_bids_valisation.txt")
@@ -929,7 +941,8 @@ def main(argv=None):
     args = parser.parse_args(argv[1:])
     NONINTERACTIVE = args.noninteractive
     acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
-    deface = yes_no('\nDo you want deface T1?')
+    deface = yes_no('\nDo you want deface T1?', default=None,
+                    noninteractive=False)
     try:
         return bids_acquisition_download(
             data_root_path=args.root_path,
