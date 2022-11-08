@@ -403,7 +403,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_changes_file or not changes_file_exists:
         changes = yes_no('\nDo you want to create/overwrite the CHANGES file?',
-                         default="yes")
+                         default="yes", noninteractive=False)
         if changes:
             changes_input = input("Type your text: ")
             with open(changes_file, 'w', encoding="utf-8") as fid:
@@ -420,7 +420,7 @@ def bids_init_dataset(data_root_path='',
 
     if overwrite_readme_file or not readme_file_exist:
         readme = yes_no('\nDo you want to create/complete the README file?',
-                        default="yes")
+                        default="yes", noninteractive=False)
         if not readme:
             readme_input = "TO BE COMPLETED BY THE USER"
         else:
@@ -865,7 +865,8 @@ def bids_acquisition_download(data_root_path='',
 
         # Validate paths with BIDSValidator
         # see also http://bids-standard.github.io/bids-validator/
-        validation_bids = yes_no('\nDo you want to use a bids validator?')
+        validation_bids = yes_no('\nDo you want to use a bids validator?',
+                                 default=None, noninteractive=False)
         if validation_bids:
             bids_validation_report = os.path.join(report_path,
                                                   "report_bids_valisation.txt")
@@ -940,7 +941,8 @@ def main(argv=None):
     args = parser.parse_args(argv[1:])
     NONINTERACTIVE = args.noninteractive
     acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
-    deface = yes_no('\nDo you want deface T1?')
+    deface = yes_no('\nDo you want deface T1?', default=None,
+                    noninteractive=False)
     try:
         return bids_acquisition_download(
             data_root_path=args.root_path,
