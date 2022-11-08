@@ -4,43 +4,45 @@
 #
 #    ./requirements/update.sh
 #
-bids-validator==1.6.0
+bids-validator==1.9.9
     # via neurospin-to-bids (setup.py)
-certifi==2020.12.5
+certifi==2022.9.24
     # via requests
-chardet==4.0.0
+charset-normalizer==2.0.12
     # via requests
 ci-info==0.2.0
     # via etelemetry
-click==7.1.2
+click==8.0.4
     # via nipype
 decorator==4.4.2
     # via networkx
 etelemetry==0.2.2
     # via nipype
-filelock==3.0.12
+filelock==3.4.1
     # via nipype
-idna==2.10
+idna==3.4
     # via requests
-isodate==0.6.0
+importlib-metadata==4.8.3
+    # via click
+isodate==0.6.1
     # via rdflib
 logutils==0.3.5
     # via neurospin-to-bids (setup.py)
-lxml==4.6.2
+lxml==4.9.1
     # via prov
-mne==0.22.0
+mne==0.23.4
     # via mne-bids
-mne-bids==0.6
+mne-bids==0.7
     # via neurospin-to-bids (setup.py)
-networkx==2.5
+networkx==2.5.1
     # via
     #   nipype
     #   prov
-nibabel==3.2.1
+nibabel==3.2.2
     # via
     #   nipype
     #   pydeface
-nipype==1.6.0
+nipype==1.7.1
     # via pydeface
 numpy==1.19.5
     # via
@@ -51,7 +53,7 @@ numpy==1.19.5
     #   pandas
     #   pydeface
     #   scipy
-packaging==20.9
+packaging==21.3
     # via
     #   nibabel
     #   nipype
@@ -59,49 +61,56 @@ pandas==1.1.5
     # via neurospin-to-bids (setup.py)
 prov==2.0.0
     # via nipype
-pydeface==2.0.0
+pydeface==2.0.2
     # via neurospin-to-bids (setup.py)
-pydicom==2.1.2
+pydicom==2.3.0
     # via neurospin-to-bids (setup.py)
 pydot==1.4.2
     # via nipype
-pyparsing==2.4.7
+pyparsing==3.0.9
     # via
     #   packaging
     #   pydot
     #   rdflib
-python-dateutil==2.8.1
+python-dateutil==2.8.2
     # via
     #   nipype
     #   pandas
     #   prov
-pytz==2021.1
+pytz==2022.6
     # via pandas
-pyyaml==5.4.1
+pyyaml==6.0
     # via neurospin-to-bids (setup.py)
 rdflib==5.0.0
     # via
     #   nipype
     #   prov
-requests==2.25.1
+requests==2.27.1
     # via etelemetry
 scipy==1.5.4
     # via
     #   mne
     #   mne-bids
     #   nipype
-simplejson==3.17.2
+simplejson==3.17.6
     # via nipype
-six==1.15.0
+six==1.16.0
     # via
     #   isodate
     #   python-dateutil
     #   rdflib
-traits==6.2.0
+traits==6.4.1
     # via nipype
-urllib3==1.26.3
+typing-extensions==4.1.1
+    # via importlib-metadata
+urllib3==1.26.12
     # via requests
+zipp==3.6.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==58.1.0
-    # via neurospin-to-bids (setup.py)
+setuptools==59.6.0
+    # via
+    #   neurospin-to-bids (setup.py)
+    #   nibabel
+    #   pydeface
