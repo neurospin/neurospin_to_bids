@@ -48,14 +48,20 @@ class Bcolors:
 NONINTERACTIVE = False
 
 
-def yes_no(question: str, *,
-           default: str = None, noninteractive: bool = False) -> bool:
+def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
     """A simple yes/no prompt
 
     Args:
         question (str): The question to be answered.
-        default (bool, optional): Default answer to `question`.
-                                  Defaults to False.
+        default (optional): Default answer to `question`, selected if the user
+                            just hits the Enter key. Must be one of 'yes',
+                            'no', or None. Defaults to None, which means that
+                            there is no default answer, the user must type
+                            either yes or no before hitting Enter.
+        noninteractive (optional): value returned in non-interactive mode, must
+                                   be one of True or False. The default value
+                                   is None, which means that the returned value
+                                   is given by the 'default' argument.
 
     Raises:
         ValueError: Raise `ValueError` when default answer is not
@@ -66,7 +72,7 @@ def yes_no(question: str, *,
     """
     valid = {"yes": True, "y": True, "no": False, "n": False}
     if NONINTERACTIVE:
-        if noninteractive:
+        if noninteractive is not None:
             return noninteractive
         else:
             return valid[default]
