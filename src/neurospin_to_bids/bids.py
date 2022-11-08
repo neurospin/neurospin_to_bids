@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Code related to the BIDS standard."""
 
 import collections

@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# Author: Yann Leprince, 2022.
+#
 # Inspired by work by Soraya Brosset (2021), Pierre-Yves Postic (2022), and
 # Aurélie Lebrun, 2021-2022.
 

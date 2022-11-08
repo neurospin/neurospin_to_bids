@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Code related to the exp_info directory (inputs of neurospin-to-bids)"""
 
 import ast

@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import argparse
 import glob
@@ -606,6 +605,8 @@ def main(argv=sys.argv):
     if sys.version_info < (3, 6):
         sys.stderr.write(f'ERROR: {prog} needs Python 3.6 or later\n')
         return 1
+    if argv is None:
+        argv = sys.argv
     # Parse arguments from console
     parser = argparse.ArgumentParser(
         description='NeuroSpin to BIDS conversion'

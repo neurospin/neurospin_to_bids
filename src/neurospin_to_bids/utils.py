@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Miscellaneous utility code."""
 
 
@@ -50,14 +49,20 @@ def set_noninteractive(noninteractive=True):
     NONINTERACTIVE = noninteractive
 
 
-def yes_no(question: str, *,
-           default: str = None, noninteractive: bool = None) -> bool:
+def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
     """A simple yes/no prompt
 
     Args:
         question (str): The question to be answered.
-        default (bool, optional): Default answer to `question`.
-                                  Defaults to None.
+        default (optional): Default answer to `question`, selected if the user
+                            just hits the Enter key. Must be one of 'yes',
+                            'no', or None. Defaults to None, which means that
+                            there is no default answer, the user must type
+                            either yes or no before hitting Enter.
+        noninteractive (optional): value returned in non-interactive mode, must
+                                   be one of True or False. The default value
+                                   is None, which means that the returned value
+                                   is given by the 'default' argument.
 
     Raises:
         ValueError: Raise `ValueError` when default answer is not
@@ -71,7 +76,12 @@ def yes_no(question: str, *,
         if noninteractive is not None:
             return noninteractive
         else:
-            return valid[default]
+            try:
+                return valid[default]
+            except KeyError:
+                raise ValueError("Missing or invalid default value, cannot "
+                                 "use noninteractive mode. You should use the "
+                                 "'default' or 'noninteractive' argument.")
     if default is None:
         prompt = " [y/n] "
     elif default == "yes":
