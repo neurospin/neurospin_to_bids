@@ -45,3 +45,6 @@ zipp==3.6.0
     # via
     #   -c requirements/production.txt
     #   importlib-metadata
+
+# Prevent 'pip-tools sync' from removing the neurospin-to-bids package...
+neurospin-to-bids

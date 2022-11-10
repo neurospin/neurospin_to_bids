@@ -12,3 +12,9 @@ python -m piptools compile --allow-unsafe --strip-extras \
        --output-file=requirements/production.txt "$@"
 python -m piptools compile --allow-unsafe --strip-extras \
        requirements/test.in "$@"
+
+cat <<EOF >> requirements/test.txt
+
+# Prevent 'pip-tools sync' from removing the neurospin-to-bids package...
+neurospin-to-bids
+EOF
