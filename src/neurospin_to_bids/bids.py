@@ -2,6 +2,7 @@
 
 import collections
 import csv
+import itertools
 import json
 import logging
 import re
@@ -14,9 +15,10 @@ logger = logging.getLogger(__name__)
 # Information below is based on this version of BIDS
 BIDS_SPEC_VERSION = '1.6.0'
 
-BIDS_PARTIAL_NAME_RE = re.compile(r'^_?(?P<entities>([a-zA-Z0-9]+-[^_.]*_?)*)'
-                                  r'(?P<suffix>[a-zA-Z0-9]+)?'
-                                  r'(?P<ext>\..*)?$')
+BIDS_PARTIAL_NAME_RE = re.compile(r'(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
+                                  r'(^|_|$)(?P<suffix>[a-zA-Z0-9]+)?'
+                                  r'(?P<ext>\..+)?$')
+BIDS_ENTITY_SPLIT_RE = re.compile(r'(?:^|_)([a-zA-Z0-9]+-)')
 BIDS_LABEL_RE = re.compile(r'^[a-zA-Z0-9]+$')
 
 # See Appendix IX of the BIDS v1.6.0 Specification, and also Appendix IV and
@@ -95,21 +97,30 @@ def validate_bids_partial_name(name):
                           'contain alphanumeric characters only', BIDSWarning)
 
 
+def parse_bids_entities(entities_text):
+    """Parse BIDS entities, returning each (key, value) pair as a generator."""
+    split_entities = BIDS_ENTITY_SPLIT_RE.split(entities_text)
+    assert split_entities[0] == ''
+    for key, value in itertools.zip_longest(split_entities[1::2],
+                                            split_entities[2::2],
+                                            fillvalue=''):
+        if key:
+            assert key[-1] == '-'
+            key = key[:-1]
+            yield (key, value)
+
+
 def parse_bids_name(name):
     """Parse any part of a BIDS basename (entities, suffix, extension)."""
     match = BIDS_PARTIAL_NAME_RE.match(name)
     if not match:
         raise BIDSError(f"the target file name {name} cannot be parsed "
                         f"according to BIDS".format(name))
-    entities_list = []
-    entities_text = match.group('entities').rstrip('_')
-    if entities_text:
-        for entity in entities_text.split('_'):
-            key, value = entity.split('-', 1)
-            entities_list.append((key, value))
-    return (collections.OrderedDict(entities_list),
-            match.group('suffix') or '',
-            match.group('ext') or '')
+    return (
+        collections.OrderedDict(parse_bids_entities(match.group('entities'))),
+        match.group('suffix') or '',
+        match.group('ext') or '',
+    )
 
 
 def compose_bids_name(entities, suffix, ext):

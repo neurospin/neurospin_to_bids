@@ -19,7 +19,7 @@ from . import bids
 logger = logging.getLogger(__name__)
 
 # Recognize a filename with "postfixes" added by dcm2niix (_ph, _e1...)
-BIDS_PLUS_POSTFIXES_RE = re.compile(r'^(?P<entities>([a-zA-Z0-9]+-[^_.]*_?)*)'
+BIDS_PLUS_POSTFIXES_RE = re.compile(r'^(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
                                     r'_(?P<suffix>[a-zA-Z0-9]+)'
                                     r'_(?P<postfixes>[^.]+)'
                                     r'(?P<ext>\..*)$')
@@ -33,13 +33,8 @@ def rename_file_with_postfixes(filename, dry_run=False):
     match = BIDS_PLUS_POSTFIXES_RE.match(basename)
     if not match:
         return  # not a BIDS name with postfixes
-    entities_list = []
-    entities_text = match.group('entities').rstrip('_')
-    if entities_text:
-        for entity in entities_text.split('_'):
-            key, value = entity.split('-', 1)
-            entities_list.append((key, value))
-    entities = collections.OrderedDict(entities_list)
+    entities = collections.OrderedDict(bids.parse_bids_entities(
+        match.group('entities')))
     suffix = match.group('suffix')
     ext = match.group('ext')
     delete_file = False
