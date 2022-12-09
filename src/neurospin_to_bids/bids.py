@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 # Information below is based on this version of BIDS
-BIDS_SPEC_VERSION = '1.6.0'
+BIDS_SPEC_VERSION = '1.8.0'
 
 BIDS_PARTIAL_NAME_RE = re.compile(r'(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
                                   r'(^|_|$)(?P<suffix>[a-zA-Z0-9]+)?'
@@ -21,33 +21,37 @@ BIDS_PARTIAL_NAME_RE = re.compile(r'(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
 BIDS_ENTITY_SPLIT_RE = re.compile(r'(?:^|_)([a-zA-Z0-9]+-)')
 BIDS_LABEL_RE = re.compile(r'^[a-zA-Z0-9]+$')
 
-# See Appendix IX of the BIDS v1.6.0 Specification, and also Appendix IV and
-# the Derivatives section.
+# See https://github.com/bids-standard/bids-specification/blob/master/src/
+# schema/rules/entities.yaml
 BIDS_ENTITY_ORDER = [
-    'sub',    # MRI
-    'ses',    # MRI
-    'task',   # MRI
-    'acq',    # MRI
-    'ce',     # MRI
-    'trc',    # PET: between 'task' and 'rec'
-    'rec',    # MRI
-    'dir',    # MRI
-    'run',    # MRI
-    'mod',    # MRI
-    'echo',   # MRI
-    'flip',   # MRI
-    'inv',    # MRI
-    'mt',     # MRI
-    'part',   # MRI
-    'recording',  # MRI
-    'proc',   # MEG: between 'run' and 'space'
-    'hemi',   # derived: after source entities, before 'space'
-    'space',  # derived: after 'hemi'; MEG: between 'proc' and 'split'
-    'split',  # MEG: after 'space'
-    'res',    # derived: between 'space' and 'den'
-    'den',    # derived: between 'res' and 'label'
-    'label',  # derived: between 'den' and 'desc'
-    'desc',   # derived: after 'label'
+    'sub',
+    'ses',
+    'sample',
+    'task',
+    'acq',
+    'ce',
+    'trc',
+    'stain',
+    'rec',
+    'dir',
+    'run',
+    'mod',
+    'echo',
+    'flip',
+    'inv',
+    'mt',
+    'part',
+    'proc',
+    'hemi',
+    'space',
+    'split',
+    'recording',
+    'chunk',
+    'atlas',
+    'res',
+    'den',
+    'label',
+    'desc',
 ]
 
 
