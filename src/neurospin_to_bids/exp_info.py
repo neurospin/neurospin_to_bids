@@ -217,7 +217,7 @@ def iterate_participants_list(filename, strict=False):
                         + utils.pinpoint_json_error(exc)
                     )
                 if not isinstance(row['infos_participant'],
-                                  collections.Mapping):
+                                  collections.abc.Mapping):
                     raise ValidationError(
                         'infos_participant must be a JSON object '
                         '(i.e. a key-value dictionary)'
