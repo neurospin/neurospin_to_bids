@@ -387,7 +387,7 @@ def bids_acquisition_download(data_root_path='',
                     download = False
                     continue
                 path_file_glob = os.path.join(
-                    nip_dir, '{0:06d}_*'.format(int(value[0])))
+                    nip_dir, f'{int(value[0]):06d}_*')
                 dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
@@ -696,7 +696,7 @@ def main(argv=sys.argv):
             dry_run=args.dry_run,
         ) or 0
     except UserError as exc:
-        logger.fatal('aborting due to user error: {0}'.format(exc))
+        logger.fatal(f'aborting due to user error: {exc}')
         return 1
 
 
