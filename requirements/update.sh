@@ -6,6 +6,15 @@
 #     ./requirements/update.sh -U
 
 export CUSTOM_COMPILE_COMMAND=./requirements/update.sh
-python -m piptools compile --allow-unsafe \
+# --strip-extras is necessary because we use requirements/*.txt as PIP
+# --constraint files (-c option)
+python -m piptools compile --allow-unsafe --strip-extras \
        --output-file=requirements/production.txt "$@"
-python -m piptools compile --allow-unsafe requirements/test.in "$@"
+python -m piptools compile --allow-unsafe --strip-extras \
+       requirements/test.in "$@"
+
+cat <<EOF >> requirements/test.txt
+
+# Prevent 'pip-tools sync' from removing the neurospin-to-bids package...
+neurospin-to-bids
+EOF

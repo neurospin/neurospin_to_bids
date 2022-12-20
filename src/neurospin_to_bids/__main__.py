@@ -1,22 +1,19 @@
 #! /usr/bin/env python3
 
 import argparse
-import collections.abc
 import glob
 import json
+import logging
 import os
-import re
+import shlex
 import shutil
 import subprocess
 import sys
 import time
-from ast import literal_eval
 from collections import OrderedDict
-from itertools import combinations
 from pathlib import Path
 
 import mne
-import numpy as np
 import pandas as pd
 import yaml
 import pydeface.utils as pdu
@@ -25,176 +22,14 @@ from mne_bids import make_dataset_description, write_raw_bids
 import pkg_resources
 
 from . import acquisition_db
+from . import bids
 from . import exp_info
-from .utils import DataError, UserError
+from . import postprocess
+from . import utils
+from .utils import DataError, UserError, yes_no
 
 
-class Bcolors:
-    """Colors to improve print statements' readability
-
-    Example:
-        `print(f"{Bcolors.OKBLUE}Hello World!{Bcolors.ENDC}")`
-    """
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-NONINTERACTIVE = False
-
-
-def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
-    """A simple yes/no prompt
-
-    Args:
-        question (str): The question to be answered.
-        default (optional): Default answer to `question`, selected if the user
-                            just hits the Enter key. Must be one of 'yes',
-                            'no', or None. Defaults to None, which means that
-                            there is no default answer, the user must type
-                            either yes or no before hitting Enter.
-        noninteractive (optional): value returned in non-interactive mode, must
-                                   be one of True or False. The default value
-                                   is None, which means that the returned value
-                                   is given by the 'default' argument.
-
-    Raises:
-        ValueError: Raise `ValueError` when default answer is not
-                    `yes` or `no`.
-
-    Returns:
-        bool: Boolean answer to the yes/no question.
-    """
-    valid = {"yes": True, "y": True, "no": False, "n": False}
-    if NONINTERACTIVE:
-        if noninteractive is not None:
-            return noninteractive
-        else:
-            try:
-                return valid[default]
-            except KeyError:
-                raise ValueError("Missing or invalid default value, cannot "
-                                 "use noninteractive mode. You should use the "
-                                 "'default' or 'noninteractive' argument.")
-    if default is None:
-        prompt = " [y/n] "
-    elif default == "yes":
-        prompt = " [Y/n] "
-    elif default == "no":
-        prompt = " [y/N] "
-    else:
-        raise ValueError(f"invalid default answer: '{default}'")
-
-    while True:
-        choice = input(question + prompt).lower()
-        if choice == '' and default is not None:
-            return valid[default]
-        if choice in valid:
-            return valid[choice]
-        print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
-
-
-def file_manager_default_file(main_path,
-                              filter_list,
-                              file_tag,
-                              file_type='*',
-                              allow_other_fields=True):
-    """Path to the most specific file with respect to optional filters.
-
-    Each filter is a list [key, value]. Like [sub, 01] or [ses, 02].
-
-    Following BIDS standard files can be of the form
-    [key-value_]...[key-value_]file_tag.file_type.
-    """
-    filters = []
-    for n in reversed(range(1, len(filter_list) + 1)):
-        filters += combinations(filter_list, n)
-    filters += [[]]
-    for filt in filters:
-        found = get_bids_files(main_path,
-                               sub_folder=False,
-                               file_type=file_type,
-                               file_tag=file_tag,
-                               filters=filt,
-                               allow_other_fields=allow_other_fields)
-        if found:
-            return found[0]
-    return None
-
-
-def file_reference(img_path):
-    file_basename = os.path.basename(img_path)
-    parts = file_basename.split('_')
-    tag, typ = parts[-1].split('.', 1)
-    reference = {
-        'file_path': img_path,
-        'file_basename': os.path.basename(img_path),
-        'file_tag': tag,
-        'file_type': typ,
-        'file_fields': '',
-        'fields_ordered': [],
-    }
-    for part in parts[:-1]:
-        reference['file_fields'] += part + '_'
-        field, value = part.split('-')
-        reference['fields_ordered'].append(field)
-        reference[field] = value
-    return reference
-
-
-def get_bids_files(main_path,
-                   file_tag='*',
-                   file_type='*',
-                   sub_id='*',
-                   file_folder='*',
-                   filters=None,
-                   ref=False,
-                   sub_folder=True,
-                   allow_other_fields=True):
-    """Return files following bids spec
-
-    Filters are of the form (key, value). Only one filter per key allowed.
-    A file for which a filter do not apply will be discarded.
-    """
-    if sub_folder:
-        files = os.path.join(main_path, 'sub-*', 'ses-*')
-        if glob.glob(files):
-            files = os.path.join(
-                main_path, 'sub-%s' % sub_id, 'ses-*', file_folder,
-                'sub-%s*_%s.%s' % (sub_id, file_tag, file_type))
-        else:
-            files = os.path.join(
-                main_path, 'sub-%s' % sub_id, file_folder,
-                'sub-%s*_%s.%s' % (sub_id, file_tag, file_type))
-    else:
-        files = os.path.join(main_path, '*%s.%s' % (file_tag, file_type))
-
-    files = glob.glob(files)
-    files.sort()
-    if filters:
-        if not allow_other_fields:
-            files = [
-                file_ for file_ in files
-                if len(os.path.basename(file_).split('_')) <= len(filters) + 1
-            ]
-        files = [file_reference(file_) for file_ in files]
-        for key, value in filters:
-            files = [
-                file_ for file_ in files
-                if (key in file_ and file_[key] == value)
-            ]
-    else:
-        files = [file_reference(file_) for file_ in files]
-
-    if ref:
-        return files
-    else:
-        return [ref_file['file_path'] for ref_file in files]
+logger = logging.getLogger(__name__)
 
 
 def bids_copy_events(behav_path='exp_info/recorded_events',
@@ -202,20 +37,16 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
                      dataset_name=None):
     dataset_name, data_path = get_bids_default_path(data_root_path,
                                                     dataset_name)
-    # ~ print(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*'))
     if glob.glob(os.path.join(data_root_path, behav_path, 'sub-*', 'ses-*')):
         sub_folders = glob.glob(
             os.path.join(behav_path, 'sub-*', 'ses-*', 'func'))
     else:
-        # ~ print(os.path.join(data_root_path, behav_path,'sub-*', 'func'))
         sub_folders = glob.glob(
             os.path.join(data_root_path, behav_path, 'sub-*', 'func'))
 
     # raise warning if no folder is found in recorded events
     if not sub_folders:
-        print(
-            f'{Bcolors.WARNING}BIDS IMPORT WARNING: NO EVENTS FILE{Bcolors.ENDC}'
-        )
+        logger.warning('no events file')
     else:
         for sub_folder in sub_folders:
             # ~ file_path = sub_folder.replace(behav_path + '/', '')
@@ -244,70 +75,6 @@ def bids_copy_events(behav_path='exp_info/recorded_events',
                 ext = ''.join(list_tmp)
                 shutil.copyfile(os.path.join(file_path, file_name),
                                 os.path.join(data_path, ext, file_name))
-
-
-def get_bids_path(data_root_path='',
-                  subject_id='01',
-                  folder='',
-                  session_id=None):
-    if session_id is None:
-        session_id = ''
-    else:
-        session_id = 'ses-' + session_id
-    return os.path.join(data_root_path, 'sub-' + subject_id, session_id, folder)
-
-
-def get_bids_file_descriptor(subject_id,
-                             task_id=None,
-                             session_id=None,
-                             acq_label=None,
-                             dir_label=None,
-                             rec_id=None,
-                             fa_id=None,
-                             part_label=None,
-                             echo_id=None,
-                             run_id=None,
-                             run_dir=None,
-                             file_tag=None,
-                             file_type=None):
-    """ Creates a filename descriptor following BIDS.
-
-    subject_id refers to the subject label
-    task_id refers to the task label
-    run_id refers to run index
-    acq_label refers to acquisition parameters as a label
-    rec_id refers to reconstruction parameters as a label
-    part_label refers to magnitude and phase parts of the images
-    echo_id refers to the index of the echo time
-    fa_id refers to the index of the used flip angle
-    """
-    if 'sub-' or 'sub' in subject_id:
-        descriptor = subject_id
-    else:
-        descriptor = 'sub-{0}'.format(subject_id)
-    if (session_id is not None) and (session_id is not np.nan):
-        descriptor += '_ses-{0}'.format(session_id)
-    if (task_id is not None) and (task_id is not np.nan):
-        descriptor += '_task-{0}'.format(task_id)
-    if (acq_label is not None) and (acq_label is not np.nan):
-        descriptor += '_acq-{0}'.format(acq_label)
-    if (echo_id is not None) and (echo_id is not np.nan):
-        descriptor += '_echo-{0}'.format(echo_id)
-    if (part_label is not None) and (part_label is not np.nan):
-        descriptor += '_part-{0}'.format(part_label)
-    if (fa_id is not None) and (fa_id is not np.nan):
-        descriptor += '_fa-{0}'.format(fa_id)
-    if (dir_label is not None) and (dir_label is not np.nan):
-        descriptor += '_dir-{0}'.format(dir_label)
-    if (rec_id is not None) and (rec_id is not np.nan):
-        descriptor += '_rec-{0}'.format(rec_id)
-    if (run_dir is not None) and (run_dir is not np.nan):
-        descriptor += '_dir-{0}'.format(run_dir)
-    if (run_id is not None) and (run_id is not np.nan):
-        descriptor += '_run-{0}'.format(run_id)
-    if (file_tag is not None) and (file_type is not None):
-        descriptor += '_{0}.{1}'.format(file_tag, file_type)
-    return descriptor
 
 
 def get_bids_default_path(data_root_path='', dataset_name=None):
@@ -343,6 +110,7 @@ def bids_init_dataset(data_root_path='',
     # CHECK DATASET REPOSITORY
     dataset_name, dataset_name_path = get_bids_default_path(
         data_root_path, dataset_name)
+
     if not os.path.exists(dataset_name_path):
         os.makedirs(dataset_name_path)
 
@@ -352,28 +120,32 @@ def bids_init_dataset(data_root_path='',
     overwrite_datadesc_file = True
     if description_file:
         overwrite_datadesc_file = yes_no(
-            '\nA dataset_description.json already exists, do you want to overwrite?',
-            default="yes")
+            '\nA dataset_description.json already exists, do you want to '
+            'overwrite?', default="yes")
     if overwrite_datadesc_file or not description_file:
-        data_descrip = yes_no(
-            '\nDo you want to create or overwrite the dataset_description.json?',
-            default="yes", noninteractive=False)
+        data_descrip = yes_no('\nDo you want to create or overwrite the '
+                              'dataset_description.json?',
+                              default="yes", noninteractive=False)
         if data_descrip:
-            print(
-                '\nIf you do not know all information: pass and edit the file later.'
-            )
-            name = input("\nType the name of this BIDS dataset: ").capitalize()
-            authors = input("\nA list of authors like `a, b, c`: ").capitalize()
+            print('\nIf you do not know all information: skip and edit the '
+                  'file later on.')
+            name = input("\nType the name of this BIDS dataset: ")
+            authors = input("\nA list of authors like `a, b, c`: ")
             acknowledgements = input(
-                "\nA list of acknowledgements like `a, b, c`: ").capitalize()
+                "\nA list of acknowledgements like `a, b, c`: ")
             how_to_acknowledge = input(
-                "\nEither a str describing how to  acknowledge this dataset OR a list of publications that should be cited: "
+                "\nEither a str describing how to  acknowledge this dataset "
+                "OR a list of publications that should be cited: "
             )
             funding = input(
-                '\nList of sources of funding (e.g., grant numbers). Must be a list of strings or a single comma separated string like `a, b, c`: '
+                '\nList of sources of funding (e.g., grant numbers). Must be '
+                'a list of strings or a single comma separated string like '
+                '`a, b, c`: '
             )
             references_and_links = input(
-                "\nList of references to publication that contain information on the dataset, or links. Must be a list of strings or a single comma separated string like `a, b, c`: "
+                "\nList of references to publication that contain information "
+                "on the dataset, or links. Must be a list of strings or a "
+                "single comma separated string like `a, b, c`: "
             )
             doi = input('\nThe DOI for the dataset: ')
             make_dataset_description(dataset_name_path,
@@ -387,9 +159,8 @@ def bids_init_dataset(data_root_path='',
                                      doi=doi,
                                      verbose=False)
         else:
-            print(
-                "\nYou may update the README file later on. A README file by default has been created."
-            )
+            print("\nYou may update the README file later on. A README file "
+                  "has been created with dummy contents.")
             make_dataset_description(dataset_name_path, name=dataset_name)
 
     # CHECK CHANGES FILE / TEXT FILE CPAN CONVENTION
@@ -448,9 +219,6 @@ def bids_acquisition_download(data_root_path='',
     The bids dataset is created if necessary before download with some
     empty mandatory files to be filled like README in case they don't exist.
 
-    The download depends on the file '[sub-*_][ses-*_]download.csv' contained
-    in the folder 'exp_info'.
-
     NIP and acq date of the subjects will be taken automatically from
     exp_info/participants_to_import.tsv file that follows bids standard. The
     file will be copied in the dataset folder without the NIP column for
@@ -475,6 +243,7 @@ def bids_acquisition_download(data_root_path='',
     # Determine target path with the name of dataset
     dataset_name, target_root_path = get_bids_default_path(
         data_root_path, dataset_name)
+    _, sourcedata_path = get_bids_default_path(data_root_path, 'sourcedata')
 
     # Create dataset directories and files if necessary
     bids_init_dataset(data_root_path, dataset_name)
@@ -487,7 +256,8 @@ def bids_acquisition_download(data_root_path='',
     if not os.path.exists(report_path):
         os.makedirs(report_path)
     download_report = open(os.path.join(report_path, download_report), 'w')
-    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id', 'download_file')
+    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id',
+    # ~                               'download_file')
     # ~ download_report.write(report_line)
     list_imported = []
     list_already_imported = []
@@ -514,53 +284,28 @@ def bids_acquisition_download(data_root_path='',
 
     # Download command for each subject/session
     # one line has the following information
-    # participant_id / NIP / infos_participant / session_label / acq_date / location / to_import
+    # participant_id / NIP / infos_participant / session_label / acq_date /
+    # location / to_import
 
     # Read the participants_to_import.tsv file for getting subjects/sessions to
     # download
-    pop = exp_info.read_participants_to_import(exp_info_path)
-
-    # ~ print(df_participant)
-
-    for _unused_index, subject_info in pop.iterrows():
-        subject_id = subject_info[0].strip()
+    pti_filename = exp_info.find_participants_to_import_tsv(exp_info_path)
+    for subject_info in exp_info.iterate_participants_list(pti_filename):
+        logger.debug('Now handling:\n%s', subject_info)
+        sub_entity = subject_info['subject_label']
+        ses_entity = subject_info.get('session_label', '')
 
         # Fill the partcipant information for the participants_to_import.tsv
-        if subject_info.get('infos_participant', '').strip():
-            info_participant = json.loads(
-                subject_info['infos_participant'].strip())
-        else:
-            info_participant = {}
-        if subject_id in dic_info_participants:
-            existing_items = dic_info_participants[subject_id]
+        info_participant = subject_info['infos_participant']
+        if sub_entity in dic_info_participants:
+            existing_items = dic_info_participants[sub_entity]
             # Existing items take precedence over new values
             info_participant.update(existing_items)
-        dic_info_participants[subject_id] = info_participant
+        dic_info_participants[sub_entity] = info_participant
 
-        # sub_path = target_root_path + subject_id + ses_path
-        # Mange the optional filters
-        # optional_filters = [('sub', subject_id)]
-        # if session_id is not None:
-        #  optional_filters += [('ses', session_id)]
-        if subject_info.get('session_label', '').strip():
-            session_id = subject_info['session_label'].strip()
-        else:
-            session_id = None
-        if session_id is None:
-            ses_path = ''
-        else:
-            ses_path = 'ses-' + session_id
-
-        if subject_id.isnumeric():
-            int(subject_id)
-            subject_id = 'sub-{0}'.format(subject_id)
-        else:
-            if 'sub-' not in subject_id:
-                print(
-                    f'{Bcolors.WARNING}BIDS IMPORTATION WARNING: SUBJECT ID PROBABLY NOT CONFORM{Bcolors.ENDC}'
-                )
-
-        sub_path = os.path.join(target_root_path, subject_id, ses_path)
+        sub_path = os.path.join(target_root_path, sub_entity, ses_entity)
+        sourcedata_sub_path = os.path.join(sourcedata_path,
+                                           sub_entity, ses_entity)
         if not os.path.exists(sub_path):
             os.makedirs(sub_path)
 
@@ -570,37 +315,20 @@ def bids_acquisition_download(data_root_path='',
             if os.path.isfile(check_file):
                 continue
 
-        # DATE has to be transformed from BIDS to NeuroSpin server standard
-        # NeuroSpin standard is yyyymmdd -> Bids standard is YYYY-MM-DD
-        acq_date = subject_info['acq_date'].strip().replace('-', '')
+        # Date in format used by /neurospin/acquisition: YYYYMMDD
+        acq_date = subject_info['acq_date'].strftime('%Y%m%d')
 
         # nip number
-        nip = subject_info['NIP'].strip()
-
-        # Get appropriate download file. As specific as possible
-        # ~ specs_path = file_manager_default_file(exp_info_path,
-        # ~                                        optional_filters, 'download',
-        # ~                                        file_type='tsv',
-        # ~                                        allow_other_fields=False)
-        # ~ report_line = '%s,%s,%s\n' % (subject_id, session_id, specs_path)
-        # ~ download_report.write(report_line)
-
-        # ~ specs = pd.read_csv(specs_path, dtype=str, sep='\t', index_col=False)
+        nip = subject_info['NIP']
 
         # Retrieve list of list for seqs to import
         # One tuple is configured as :(file_to_import;acq_folder;acq_name)
         # value[0] : num of seq
         # value[1] : modality
         # value[2] : part of ht file_name
-        to_import = subject_info['to_import'].strip()
-        if to_import:
-            seqs_to_retrieve = literal_eval(to_import)
-            if not isinstance(seqs_to_retrieve, collections.abc.Collection):
-                raise TypeError("seqs_to_retrieve must be a Collection")
-        else:
-            seqs_to_retrieve = []
-        print("Scans for ", nip)
-        print(json.dumps(seqs_to_retrieve))
+        seqs_to_retrieve = subject_info['to_import']
+        logger.debug("to_import for %s on %s: %s", nip, acq_date,
+                     json.dumps(seqs_to_retrieve))
         # Convert the first element if there is only one sequence, otherwise
         # each value will be used as str and note tuple).
         if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
@@ -609,28 +337,20 @@ def bids_acquisition_download(data_root_path='',
         # download data, store information in batch files for anat/fmri
         # download data for meg data
         for value in seqs_to_retrieve:
-            # ~ print(seqs_to_retrieve)
-            def get_value(key, text):
-                m = re.search(key + '-(.+?)_', text)
-                if m:
-                    return m.group(1)
-                else:
-                    return None
-
-            run_task = get_value('task', value[2])
-            acq_label = get_value('acq', value[2])
-            run_id = get_value('run', value[2])
-            run_dir = get_value('dir', value[2])
-            echo_id = get_value('echo', value[2])
-            part_label = get_value('part', value[2])
-            fa_id = get_value('fa', value[2])
-            run_session = session_id
-
-            tag = value[2].split('_')[-1]
+            try:
+                exp_info.validate_element_to_import(value)
+            except exp_info.ValidationError as exc:
+                logger.error('for subject %s on %s, skipping import of a '
+                             'sequence: %s', nip, acq_date, str(exc))
 
             target_path = os.path.join(sub_path, value[1])
+            sourcedata_target_path = os.path.join(sourcedata_sub_path,
+                                                  value[1])
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
+
+            target_filename = bids.add_entities(value[2],
+                                                sub_entity + '_' + ses_entity)
 
             # MEG CASE
             if value[1] == 'meg':
@@ -639,40 +359,23 @@ def bids_acquisition_download(data_root_path='',
                 if not os.path.exists(meg_path):
                     os.makedirs(meg_path)
 
-                # Create the sub-emptyroom
-                # ~ sub-emptyroom_path = os.path.join(data_root_path, 'sub_emptyroom')
-                # ~ if not os.path.exists(sub-emptyroom_path):
-                    # ~ os.makedirs(sub-emptyroom_path)
-
                 meg_file = os.path.join(
                     acquisition_db.get_database_path(subject_info['location']),
-                    nip, acq_date, value[0]
+                    nip, subject_info['acq_date'].strftime('%y%m%d'), value[0]
                 )
-                print(meg_file)
-                filename = get_bids_file_descriptor(subject_id,
-                                                    task_id=run_task,
-                                                    run_id=run_id,
-                                                    run_dir=run_dir,
-                                                    session_id=run_session,
-                                                    file_tag=tag,
-                                                    acq_label=acq_label,
-                                                    echo_id=echo_id,
-                                                    part_label=part_label,
-                                                    fa_id=fa_id,
-                                                    file_type='tif')
-                # ~ output_path = os.path.join(target_path, filename)
-                # ~ print(output_path)
-                # ~ shutil.copyfile(meg_file, output_path)
+                logger.info(meg_file)
+
                 raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
 
-                write_raw_bids(raw, filename, target_path, overwrite=True)
+                write_raw_bids(raw, target_filename, target_path,
+                               overwrite=True)
                 # add event
                 # create json file
                 # copy the subject emptyroom
 
-            # ANAT and FUNC case
+            # MRI CASE
             # todo: bad practices, to refactor for the sake of simplicity
-            elif value[1] in ('anat', 'func', 'dwi', 'fmap'):
+            else:
                 download = True
                 dicom_paths = []
                 path_file_glob = ""
@@ -685,65 +388,70 @@ def bids_acquisition_download(data_root_path='',
                     continue
                 path_file_glob = os.path.join(
                     nip_dir, '{0:06d}_*'.format(int(value[0])))
-                # ~ print(path_file_glob)
                 dicom_paths = glob.glob(path_file_glob)
 
                 if not dicom_paths and download:
                     list_warning.append("file not found "
                                         + path_file_glob)
-                    # ~ print(message)
-                    # ~ download_report.write(message)
                 elif download:
                     dicom_path = dicom_paths[0]
-                    list_imported.append("\n IMPORTATION OF " + dicom_path)
-                    # ~ print(message)
-                    # ~ download_report.write(message)
-                    # Expecting page 10 bids specification file name
-                    filename = get_bids_file_descriptor(subject_id,
-                                                        task_id=run_task,
-                                                        run_id=run_id,
-                                                        run_dir=run_dir,
-                                                        session_id=run_session,
-                                                        file_tag=tag,
-                                                        acq_label=acq_label,
-                                                        echo_id=echo_id,
-                                                        part_label=part_label,
-                                                        fa_id=fa_id,
-                                                        file_type='nii')
+                    list_imported.append("importation of " + dicom_path)
 
                     if value[1] == 'anat' and deface:
-                        print("\n Deface with pydeface")
+                        logger.info("\n Deface with pydeface")
                         files_for_pydeface.append(
-                            os.path.join(target_path, filename + ".gz"))
+                            os.path.join(target_path, target_filename))
 
                     # append list for preparing the batch importation
                     file_to_convert = {
                         'in_dir': dicom_path,
                         'out_dir': target_path,
-                        'filename': os.path.splitext(filename)[0]
+                        'filename': os.path.splitext(target_filename)[0]
                     }
                     is_file_to_import = os.path.join(
-                        os.path.join(os.getcwd(), target_path, filename))
+                        os.path.join(os.getcwd(), target_path,
+                                     target_filename))
 
                     if os.path.isfile(is_file_to_import):
                         list_already_imported.append(
-                            f" ALREADY IMPORTED: {is_file_to_import}")
+                            f"already imported: {is_file_to_import}")
                     else:
                         infiles_dcm2nii.append(file_to_convert)
 
-                    # Add descriptor into the json file
-                    if run_task:
-                        filename_json = os.path.join(target_path,
-                                                     filename[:-3] + 'json')
+                    # Create the symlink in sourcedata
+                    sourcedata_link = os.path.join(sourcedata_target_path,
+                                                   file_to_convert['filename'])
+                    try:
+                        link_already_exists = os.path.samefile(sourcedata_link,
+                                                               dicom_path)
+                    except FileNotFoundError:
+                        link_already_exists = False
+                    if not link_already_exists:
+                        try:
+                            if os.path.islink(sourcedata_link):
+                                os.unlink(sourcedata_link)
+                            os.makedirs(sourcedata_target_path, exist_ok=True)
+                            os.symlink(dicom_path, sourcedata_link,
+                                       target_is_directory=True)
+                        except OSError:
+                            logger.error('could not create a sourcedata '
+                                         'symlink %s -> %s',
+                                         sourcedata_target_path, dicom_path)
+
+                    # Add descriptor(s) into the json file
+                    filename_json = os.path.join(
+                        target_path,
+                        os.path.splitext(target_filename)[0] + '.json'
+                    )
+                    entities, _, _ = bids.parse_bids_name(target_filename)
+                    task = entities.get('task')
+                    if task:
                         dict_descriptors.update(
                             {filename_json: {
-                                'TaskName': run_task
+                                'TaskName': task,
                             }})
 
                     if len(value) == 4:
-                        # ~ print('value[3]', value[3] )
-                        filename_json = os.path.join(target_path,
-                                                     filename[:-3] + 'json')
                         dict_descriptors.update({filename_json: value[3]})
 
         # Importation and conversion of dicom files
@@ -762,51 +470,53 @@ def bids_acquisition_download(data_root_path='',
     with open(dcm2nii_batch_file, 'w') as f:
         yaml.dump(dcm2nii_batch, f)
 
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
-    print(
-        "-------------------    SUMMARY OF IMPORTATION   --------------------------------------"
-    )
-    print(
-        "--------------------------------------------------------------------------------------\n"
-    )
+    report_lines = ["-" * 80]
     for i in list_already_imported:
-        print(i)
+        report_lines.append(i)
         download_report.write(i)
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
+    if list_already_imported:
+        report_lines.append("-" * 80)
     for i in list_imported:
-        print(i)
+        report_lines.append(i)
         download_report.write(i)
-    print(
-        "\n------------------------------------------------------------------------------------"
-    )
-    print(Bcolors.WARNING, end='')
+    report_lines.append("-" * 80)
+    logger.info("Summary of importation:\n%s", "\n".join(report_lines))
+
+    report_lines = []
     for i in list_warning:
-        print('\n  WARNING: ' + i)
+        report_lines.append('- ' + i)
         download_report.write('\n  WARNING: ' + i)
-    print(Bcolors.ENDC)
-    print(
-        "------------------------------------------------------------------------------------"
-    )
-    print(
-        "------------------------------------------------------------------------------------\n"
-    )
+    if report_lines:
+        logger.warning("Warnings:\n%s\n%s\n%s",
+                       "-" * 80, "\n".join(report_lines), "-" * 80)
     download_report.close()
 
+    if list_warning:
+        do_continue = yes_no(f'There are {len(list_warning)} warnings (see '
+                             'above. Do you want to ignore them and continue?',
+                             default='no', noninteractive=False)
+        if not do_continue:
+            logger.fatal('Aborting upon user request.')
+            return 1
+
     if dry_run:
-        print("\n NO IMPORTATION, DRY-RUN OPTION IS TRUE \n")
+        logger.info("no importation, dry-run option is enabled")
     else:
-        print('\n')
         cmd = ("dcm2niibatch", dcm2nii_batch_file)
         ret = subprocess.call(cmd)
         if ret != 0:
-            print(f'{Bcolors.FAIL}dcm2niibatch returned an error, see above'
-                  f'{Bcolors.ENDC}')
+            logger.error('dcm2niibatch returned an error, see above')
 
-        # loop for checking if downloaded are ok and create the downloaded files
+        for file_to_convert in infiles_dcm2nii:
+            generated_files = glob.glob(os.path.join(
+                file_to_convert['out_dir'],
+                file_to_convert['filename'] + '*'))
+            for filename in generated_files:
+                if not filename.endswith('.json'):
+                    postprocess.rename_file_with_postfixes(filename)
+
+        # loop for checking if downloaded are ok and create the downloaded
+        # files
         #    done_file = open(os.path.join(sub_path, 'downloaded'), 'w')
         #    done_file.close()
 
@@ -830,7 +540,8 @@ def bids_acquisition_download(data_root_path='',
             print(template)
             os.environ['FSLDIR'] = "/i2bm/local/fsl/bin/"
             os.environ['FSLOUTPUTTYPE'] = "NIFTI_PAIR"
-            os.environ['PATH'] = os.environ['FSLDIR'] + ":" + os.environ['PATH']
+            os.environ['PATH'] = (os.environ['FSLDIR']
+                                  + os.pathsep + os.environ['PATH'])
 
             for file_to_deface in files_for_pydeface:
                 print(f"\nDeface with pydeface {file_to_deface}")
@@ -871,36 +582,35 @@ def bids_acquisition_download(data_root_path='',
             bids_validation_report = os.path.join(report_path,
                                                   "report_bids_valisation.txt")
             if shutil.which('bids-validator'):
-                cmd = f"bids-validator {target_root_path} > {bids_validation_report}"
+                cmd = (f"bids-validator {shlex.quote(target_root_path)} "
+                       f"| tee {shlex.quote(bids_validation_report)}")
                 subprocess.call(cmd, shell=True)
-                cmd = f"cat < {bids_validation_report}"
-                subprocess.call(cmd, shell=True)
-                print(
-                    f'\n\nSee the summary of bids validator at {bids_validation_report}'
-                )
+                print(f'\n\nSee the summary of bids validator at '
+                      f'{bids_validation_report}')
             else:
                 validator = BIDSValidator()
                 os.chdir(target_root_path)
                 for file_to_test in Path('.').glob('./**/*'):
                     if file_to_test.is_file():
                         file_to_test = '/' + str(file_to_test)
-                        print(
-                            f'\nTest the following name of file : {file_to_test} with BIDSValidator'
-                        )
+                        print(f'\nTest the following name of file: '
+                              f'{file_to_test} with BIDSValidator')
                         print(validator.is_bids(file_to_test))
 
     print('\n')
 
 
-def main(argv=None):
-    global NONINTERACTIVE
+def main(argv=sys.argv):
+    prog = os.path.basename(argv[0])
     if sys.version_info < (3, 6):
-        print('ERROR: neurospin_to_bids needs Python 3.6 or later')
+        sys.stderr.write(f'ERROR: {prog} needs Python 3.6 or later\n')
         return 1
     if argv is None:
         argv = sys.argv
     # Parse arguments from console
-    parser = argparse.ArgumentParser(description='NeuroSpin to BIDS conversion')
+    parser = argparse.ArgumentParser(
+        description='NeuroSpin to BIDS conversion'
+    )
     parser.add_argument('--root-path', '-root_path',
                         default='.',
                         help='directory containing exp_info to download into')
@@ -936,14 +646,44 @@ def main(argv=None):
     parser.add_argument('--noninteractive', action='store_true',
                         help='Do not request interactive input from the '
                         'terminal')
+    parser.add_argument('--autolist', action='store_true',
+                        help='Try to use the experimental autolist feature')
+    parser.add_argument('--debug', dest='logging_level', action='store_const',
+                        const=logging.DEBUG, default=logging.INFO,
+                        help='Enable debugging messages')
 
     # LOAD CONSOLE ARGUMENTS
     args = parser.parse_args(argv[1:])
-    NONINTERACTIVE = args.noninteractive
-    acquisition_db.ACQUISITION_ROOT_PATH = args.acquisition_dir
-    deface = yes_no('\nDo you want deface T1?', default=None,
-                    noninteractive=False)
+
+    # Configure logging to a file + colorized logging on stderr
+    report_dir = os.path.join(args.root_path, 'report')
+    os.makedirs(report_dir, exist_ok=True)
+    logging.basicConfig(
+        level=min(args.logging_level, logging.INFO),
+        filename=os.path.join(report_dir, 'neurospin_to_bids.log'),
+        filemode='a',
+    )
+    root_logger = logging.getLogger()
+    formatter = logging.Formatter(f'{prog}: %(levelname)s: %(message)s')
+    from logutils.colorize import ColorizingStreamHandler
+    handler = ColorizingStreamHandler(sys.stderr)
+    handler.setFormatter(formatter)
+    handler.setLevel(args.logging_level)
+    root_logger.addHandler(handler)
+    logging.captureWarnings(True)
+
+    logger.info('Started %s', ' '.join(shlex.quote(arg) for arg in argv))
+
+    utils.set_noninteractive(args.noninteractive)
+    acquisition_db.set_root_path(args.acquisition_dir)
+
     try:
+        if args.autolist:
+            from . import autolist
+            autolist.autolist_dicom(os.path.join(args.root_path, 'exp_info'))
+            return
+        deface = yes_no('\nDo you want deface T1?', default=None,
+                        noninteractive=False)
         return bids_acquisition_download(
             data_root_path=args.root_path,
             dataset_name=args.dataset_name,
@@ -953,10 +693,10 @@ def main(argv=None):
             deface=deface,
             no_gz=args.no_gz,
             data_orientation=args.data_orientation,
-            dry_run=args.dry_run
+            dry_run=args.dry_run,
         ) or 0
     except UserError as exc:
-        print('USER ERROR, aborting: {0}'.format(exc))
+        logger.fatal('aborting due to user error: {0}'.format(exc))
         return 1
 
 

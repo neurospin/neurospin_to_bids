@@ -3,3 +3,4 @@
 
 # Add packages that are used for testing
 pytest
+pytest-cov
