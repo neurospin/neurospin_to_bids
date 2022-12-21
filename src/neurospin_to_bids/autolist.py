@@ -206,7 +206,7 @@ def _autolist_handle_repetitions(series_list, autolist_config,
                              '"run-", the resulting BIDS names are not '
                              'guaranteed to be unique')
         else:
-            repetition_entities = ['run-{}'.format(i)
+            repetition_entities = [f'run-{i}'
                                    for i in range(1, repetition_count+1)]
         for series_desc, entities in zip(
                 repeated_series, itertools.cycle(repetition_entities)):
