@@ -1,4 +1,5 @@
 import collections.abc
+import logging
 import shutil
 
 import neurospin_to_bids.__main__
@@ -6,7 +7,7 @@ import neurospin_to_bids.__main__
 import yaml
 
 
-def test_simple_import_mri(tmp_path):
+def test_simple_import_mri(tmp_path, caplog):
     ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
                / 'aa000001-001_001')
     (ses_dir / '000003_mprage-sag-T1').mkdir(parents=True)
@@ -26,6 +27,8 @@ def test_simple_import_mri(tmp_path):
         '--root-path', str(tmp_path)
     ])
     assert ret == 0
+    for record in caplog.records:
+        assert record.levelno < logging.ERROR
 
     with (exp_info_dir / 'batch_dcm2nii.yaml').open() as f:
         batch = yaml.safe_load(f)
@@ -49,7 +52,7 @@ def test_simple_import_mri(tmp_path):
     ]
 
 
-def test_import_mri_with_unquoted_infos_participant(tmp_path):
+def test_import_mri_with_unquoted_infos_participant(tmp_path, caplog):
     ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
                / 'aa000001-001_001')
     (ses_dir / '000003_mprage-sag-T1').mkdir(parents=True)
@@ -69,9 +72,11 @@ def test_import_mri_with_unquoted_infos_participant(tmp_path):
         '--root-path', str(tmp_path)
     ])
     assert ret == 0
+    for record in caplog.records:
+        assert record.levelno < logging.ERROR
 
 
-def test_import_mri_with_quoted_infos_participant(tmp_path):
+def test_import_mri_with_quoted_infos_participant(tmp_path, caplog):
     ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
                / 'aa000001-001_001')
     (ses_dir / '000003_mprage-sag-T1').mkdir(parents=True)
@@ -91,6 +96,8 @@ def test_import_mri_with_quoted_infos_participant(tmp_path):
         '--root-path', str(tmp_path)
     ])
     assert ret == 0
+    for record in caplog.records:
+        assert record.levelno < logging.ERROR
 
 
 def test_simple_import_mri_invalid_sequence(tmp_path):

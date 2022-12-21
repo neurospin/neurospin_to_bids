@@ -70,7 +70,7 @@ class BIDSWarning(Warning):
 
 class BIDSTSVDialect(csv.Dialect):
     delimiter = '\t'
-    quotechar = "'"
+    quotechar = '"'
     quoting = csv.QUOTE_MINIMAL
     # doublequote is not explicitly specified by BIDS, but it cannot be
     # otherwise as BIDS does not define an escapechar.
