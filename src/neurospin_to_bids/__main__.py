@@ -400,7 +400,8 @@ def bids_acquisition_download(data_root_path='',
                     if value[1] == 'anat' and deface:
                         logger.info("\n Deface with pydeface")
                         files_for_pydeface.append(
-                            os.path.join(target_path, target_filename + ".nii.gz"))
+                            os.path.join(target_path, target_filename 
+                                         + ".nii.gz"))
 
                     # append list for preparing the batch importation
                     file_to_convert = {
