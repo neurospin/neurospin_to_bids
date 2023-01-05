@@ -13,8 +13,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - 3.6
+        include:
+          # The Ubuntu 18.04 image will be removed from GitHub in April 2023,
+          # at that time we will need to migrate tests to ubuntu-20.04 even if
+          # our actual production environment is still Ubuntu 18.04.
+          - os: ubuntu-18.04
+            python-version: 3.6
+          - os: ubuntu-20.04
+            python-version: 3.8
+          # This is known to be broken because the dependency versions pinned
+          # by piptools under Python 3.6 are too old for 3.10. Until a fix is
+          # found, there is no use running these tests.
+          # - os: ubuntu-22.04
+          #   python-version: 3.10
 
     steps:
     - uses: actions/checkout@v3
