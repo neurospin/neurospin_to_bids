@@ -278,6 +278,8 @@ def bids_acquisition_download(data_root_path='',
     # Dict of descriptors to be added
     dict_descriptors = {}
 
+    gz_ext = '' if no_gz else '.gz'
+
     ####################################
     # GETTING INFORMATION TO DOWNLOAD
     ####################################
@@ -400,8 +402,8 @@ def bids_acquisition_download(data_root_path='',
                     if value[1] == 'anat' and deface:
                         logger.info("\n Deface with pydeface")
                         files_for_pydeface.append(
-                            os.path.join(target_path, target_filename
-                                         + ".nii.gz"))
+                            os.path.join(target_path,
+                                         target_filename + '.nii' + gz_ext))
 
                     # append list for preparing the batch importation
                     file_to_convert = {
@@ -410,9 +412,9 @@ def bids_acquisition_download(data_root_path='',
                         'filename': os.path.splitext(target_filename)[0]
                     }
                     is_file_to_import = os.path.join(
-                        os.path.join(os.getcwd(), target_path,
-                                     target_filename))
-
+                        os.getcwd(), target_path,
+                        target_filename + ".nii" + gz_ext)
+                    logger.debug('is_file_to_import=%s', is_file_to_import)
                     if os.path.isfile(is_file_to_import):
                         list_already_imported.append(
                             f"already imported: {is_file_to_import}")
