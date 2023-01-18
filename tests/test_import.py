@@ -100,6 +100,30 @@ def test_import_mri_with_quoted_infos_participant(tmp_path, caplog):
         assert record.levelno < logging.ERROR
 
 
+def test_import_mri_with_empty_json_fields(tmp_path, caplog):
+    ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
+               / 'aa000001-001_001')
+    (ses_dir / '000003_mprage-sag-T1').mkdir(parents=True)
+    exp_info_dir = tmp_path / 'exp_info'
+    exp_info_dir.mkdir()
+    with (exp_info_dir / 'participants_to_import.tsv').open(mode='w') as f:
+        f.write('participant_id\tNIP\tinfos_participant\t'
+                'acq_date\tlocation\tto_import\n'
+                'sub-01\taa000001\t   \t'
+                '2000-01-01\tprisma\t   \n')
+
+    exe = shutil.which('neurospin_to_bids')
+    assert exe is not None
+    ret = neurospin_to_bids.__main__.main([
+        'neurospin_to_bids', '--noninteractive', '--dry-run',
+        '--acquisition-dir', str(tmp_path / 'acq'),
+        '--root-path', str(tmp_path)
+    ])
+    assert ret == 0
+    for record in caplog.records:
+        assert record.levelno < logging.ERROR
+
+
 def test_simple_import_mri_invalid_sequence(tmp_path):
     ses_dir = (tmp_path / 'acq' / 'database' / 'Prisma_fit' / '20000101'
                / 'aa000001-001_001')

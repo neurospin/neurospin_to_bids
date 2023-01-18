@@ -208,31 +208,40 @@ def iterate_participants_list(filename, strict=False):
                         raise ValidationError(
                             f'invalid session_label: {exc}') from exc
 
-                try:
-                    row['infos_participant'] = json.loads(
-                        row.get('infos_participant', '{}'))
-                except json.JSONDecodeError as exc:
-                    raise ValidationError(
-                        'malformed JSON in infos_participant:\n'
-                        + utils.pinpoint_json_error(exc)
-                    )
-                if not isinstance(row['infos_participant'],
-                                  collections.abc.Mapping):
-                    raise ValidationError(
-                        'infos_participant must be a JSON object '
-                        '(i.e. a key-value dictionary)'
-                    )
+                infos_participant_txt = (
+                    row.get('infos_participant', '').strip()
+                )
+                if infos_participant_txt:
+                    try:
+                        row['infos_participant'] = json.loads(
+                            infos_participant_txt)
+                    except json.JSONDecodeError as exc:
+                        raise ValidationError(
+                            'malformed JSON in infos_participant:\n'
+                            + utils.pinpoint_json_error(exc)
+                        )
+                    if not isinstance(row['infos_participant'],
+                                      collections.abc.Mapping):
+                        raise ValidationError(
+                            'infos_participant must be a JSON object '
+                            '(i.e. a key-value dictionary)'
+                        )
+                else:
+                    row['infos_participant'] = {}
 
                 row['acq_date'] = parse_acq_date(row['acq_date'].strip())
                 row['location'] = row['location'].strip()
 
-                try:
-                    row['to_import'] = ast.literal_eval(
-                        row.get('to_import', '[]').strip())
-                except (ValueError, TypeError, SyntaxError, MemoryError,
-                        RecursionError) as exc:
-                    raise ValidationError(
-                        'cannot parse the to_import column: ' + str(exc))
+                to_import_txt = row.get('to_import', '').strip()
+                if to_import_txt:
+                    try:
+                        row['to_import'] = ast.literal_eval(to_import_txt)
+                    except (ValueError, TypeError, SyntaxError, MemoryError,
+                            RecursionError) as exc:
+                        raise ValidationError(
+                            'cannot parse the to_import column: ' + str(exc))
+                else:
+                    row['to_import'] = []
                 validate_to_import(row['to_import'])
             except ValidationError as exc:
                 if strict:
