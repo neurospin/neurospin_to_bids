@@ -148,7 +148,7 @@ def bids_init_dataset(data_root_path='',
                 "single comma separated string like `a, b, c`: "
             )
             doi = input('\nThe DOI for the dataset: ')
-            make_dataset_description(dataset_name_path,
+            make_dataset_description(path=dataset_name_path,
                                      name=name,
                                      data_license=None,
                                      authors=authors,
@@ -161,7 +161,7 @@ def bids_init_dataset(data_root_path='',
         else:
             print("\nYou may update the README file later on. A README file "
                   "has been created with dummy contents.")
-            make_dataset_description(dataset_name_path, name=dataset_name)
+            make_dataset_description(path=dataset_name_path, name=dataset_name)
 
     # CHECK CHANGES FILE / TEXT FILE CPAN CONVENTION
     changes_file = os.path.join(dataset_name_path, 'CHANGES')

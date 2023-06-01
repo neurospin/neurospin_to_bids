@@ -8,9 +8,11 @@
 export CUSTOM_COMPILE_COMMAND=./requirements/update.sh
 # --strip-extras is necessary because we use requirements/*.txt as PIP
 # --constraint files (-c option)
-python -m piptools compile --allow-unsafe --strip-extras \
+python -m piptools compile \
+       --allow-unsafe --strip-extras --resolver=backtracking \
        --output-file=requirements/production.txt "$@"
-python -m piptools compile --allow-unsafe --strip-extras \
+python -m piptools compile \
+       --allow-unsafe --strip-extras --resolver=backtracking \
        requirements/test.in "$@"
 
 cat <<EOF >> requirements/test.txt
