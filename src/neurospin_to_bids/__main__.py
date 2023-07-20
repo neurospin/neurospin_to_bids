@@ -541,7 +541,7 @@ def bids_acquisition_download(data_root_path='',
                 facemask = ("/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/"
                             "unicog-dev/bids/template_deface/facemask.nii.gz")
             print(template)
-            os.environ['FSLDIR'] = "/i2bm/local/fsl/bin/"
+            os.environ['FSLDIR'] = "/drf/local/fsl/bin/"
             os.environ['FSLOUTPUTTYPE'] = "NIFTI_PAIR"
             os.environ['PATH'] = (os.environ['FSLDIR']
                                   + os.pathsep + os.environ['PATH'])
