@@ -56,7 +56,7 @@ BIDS_ENTITY_ORDER = [
 
 
 class BIDSError(Exception):
-    """Exception raised for unparseable BIDS data."""
+    """Exception raised for unparsable BIDS data."""
     pass
 
 

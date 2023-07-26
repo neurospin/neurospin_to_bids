@@ -73,7 +73,7 @@ def canonicalize_glob_pattern(pattern):
 
 
 def get_session_path(scanner, acq_date, nip):
-    """Get the path to the directory containg data from one acquisition session
+    """Get the path to the directory containing data from one acquisition session
 
     scanner (str): valid choices are the members of NEUROSPIN_DATABASES.keys()
     acq_date (str): the acquisition date in YYYYMMDD format
@@ -102,7 +102,7 @@ def get_session_path(scanner, acq_date, nip):
 
 
 def get_session_paths(scanner, acq_date, nip):
-    """Get the path to the directory containg data from acquisition session(s)
+    """Get the path to the directory containing data from acquisition session(s)
 
     scanner (str): valid choices are the members of NEUROSPIN_DATABASES.keys()
     acq_date (str): the acquisition date in YYYYMMDD format
