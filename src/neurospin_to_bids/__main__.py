@@ -605,7 +605,7 @@ def bids_acquisition_download(data_root_path='',
 
 def main(argv=sys.argv):
     prog = os.path.basename(argv[0])
-    if sys.version_info < (3, 6):
+    if sys.version_info < (3, 6):  # noqa: UP036
         sys.stderr.write(f'ERROR: {prog} needs Python 3.6 or later\n')
         return 1
     if argv is None:
