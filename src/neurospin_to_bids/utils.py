@@ -97,4 +97,4 @@ def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
             return valid[default]
         if choice in valid:
             return valid[choice]
-        print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+        print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
