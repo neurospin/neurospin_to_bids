@@ -41,9 +41,8 @@ def get_database_path(scanner):
     try:
         relative_db_path = NEUROSPIN_DATABASES[scanner.strip().lower()]
     except KeyError:
-        raise UserError('invalid scanner {0!r}, must be one of {{{1}}}'
-                        .format(scanner,
-                                ', '.join(NEUROSPIN_DATABASES.keys())))
+        scanners = ', '.join(NEUROSPIN_DATABASES.keys())
+        raise UserError(f'invalid scanner {scanner!r}, must be one of {{{scanners}}}')
     return os.path.join(ACQUISITION_ROOT_PATH, relative_db_path)
 
 
