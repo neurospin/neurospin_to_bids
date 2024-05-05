@@ -98,18 +98,21 @@ def validate_element_to_import(value):
         raise ValidationError("each element of to_import must be of length 3 "
                               "or 4")
     if not isinstance(value[0], (str, int)):
-        raise ValidationError("the first value of each element of to_import "
-                              "must be a string (for MEG) or integer (for "
-                              "MRI) (offending value is {!r})"
-                              .format(value[0]))
+        raise ValidationError(
+            "the first value of each element of to_import "
+            "must be a string (for MEG) or integer (for "
+            f"MRI) (offending value is {value[0]!r})"
+        )
     if not isinstance(value[1], str):
-        raise ValidationError("the second value of each element of to_import "
-                              "must be a string (offending value is {!r})"
-                              .format(value[1]))
+        raise ValidationError(
+            "the second value of each element of to_import "
+            f"must be a string (offending value is {value[1]!r})"
+        )
     if not isinstance(value[2], str):
-        raise ValidationError("the third value of each element of to_import "
-                              "must be a string (offending value is {!r})"
-                              .format(value[2]))
+        raise ValidationError(
+            "the third value of each element of to_import "
+            f"must be a string (offending value is {value[2]!r})"
+        )
     try:
         bids.validate_bids_partial_name(value[2])
         if len(value) > 3:
