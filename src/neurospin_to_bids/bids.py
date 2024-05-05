@@ -159,9 +159,10 @@ def validate_bids_label(label):
 def validate_metadata_dict(value):
     """Validate the additional metadata in each element of to_import."""
     if not isinstance(value[3], dict):
-        raise BIDSError("the fourth value of each element of to_import "
-                        "must be a dictionary (offending value is {!r})"
-                        .format(value[3]))
+        raise BIDSError(
+            "the fourth value of each element of to_import "
+            f"must be a dictionary (offending value is {value[3]!r})"
+        )
     try:
         json.dumps(value)
     except TypeError:
