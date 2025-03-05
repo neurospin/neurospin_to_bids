@@ -26,6 +26,3 @@ tomli==2.2.1
     # via
     #   coverage
     #   pytest
-
-# Prevent 'pip-tools sync' from removing the neurospin-to-bids package...
-neurospin-to-bids
