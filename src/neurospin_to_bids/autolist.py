@@ -118,6 +118,7 @@ def _autolist_dicom_first_pass(series_list, autolist_config):
                     logger.warning('in DICOM session %s, rules %d (%s) '
                                    'and %d (%s) both match series %d (%s), '
                                    'the first one takes precedence',
+                                   '<unknown>',
                                    rule_matched,
                                    rules[rule_matched]['SeriesDescription'],
                                    rule_index, rule['SeriesDescription'],
