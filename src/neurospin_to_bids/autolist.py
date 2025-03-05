@@ -171,11 +171,11 @@ def _autolist_dicom_first_pass(series_list, autolist_config):
 
                 logger.debug('first pass rule: %d -> %s/%s',
                              series_number, data_type, bids_name)
-                yield dict(series_number=series_number,
-                           data_type=data_type,
-                           bids_name=bids_name,
-                           metadata=metadata,
-                           rule_index=rule_index)
+                yield {'series_number': series_number,
+                       'data_type': data_type,
+                       'bids_name': bids_name,
+                       'metadata': metadata,
+                       'rule_index': rule_index}
 
 
 def _autolist_handle_repetitions(series_list, autolist_config,
