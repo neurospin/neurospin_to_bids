@@ -14,9 +14,11 @@ logger = logging.getLogger(__name__)
 # Information below is based on this version of BIDS
 BIDS_SPEC_VERSION = '1.8.0'
 
-BIDS_PARTIAL_NAME_RE = re.compile(r'(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
-                                  r'(^|_|$)(?P<suffix>[a-zA-Z0-9]+)?'
-                                  r'(?P<ext>\..+)?$')
+BIDS_PARTIAL_NAME_RE = re.compile(
+    r'(?P<entities>((^|_)[a-zA-Z0-9]+-.*?)*)'
+    r'(^|_|$)(?P<suffix>[a-zA-Z0-9]+)?'
+    r'(?P<ext>\..+)?$'
+)
 BIDS_ENTITY_SPLIT_RE = re.compile(r'(?:^|_)([a-zA-Z0-9]+-)')
 BIDS_LABEL_RE = re.compile(r'^[a-zA-Z0-9]+$')
 
@@ -56,6 +58,7 @@ BIDS_ENTITY_ORDER = [
 
 class BIDSError(Exception):
     """Exception raised for unparsable BIDS data."""
+
     pass
 
 
@@ -64,6 +67,7 @@ class BIDSWarning(Warning):
 
     Using a Warning allows to transform it into an Exception in strict mode.
     """
+
     pass
 
 
@@ -96,17 +100,20 @@ def validate_bids_partial_name(name):
     entities, suffix, ext = parse_bids_name(name)
     for key, value in entities.items():
         if not BIDS_LABEL_RE.match(value):
-            warnings.warn(f'value for the BIDS entity {key}-{value} should '
-                          'contain alphanumeric characters only', BIDSWarning)
+            warnings.warn(
+                f'value for the BIDS entity {key}-{value} should '
+                'contain alphanumeric characters only',
+                BIDSWarning,
+            )
 
 
 def parse_bids_entities(entities_text):
     """Parse BIDS entities, returning each (key, value) pair as a generator."""
     split_entities = BIDS_ENTITY_SPLIT_RE.split(entities_text)
     assert split_entities[0] == ''
-    for key, value in itertools.zip_longest(split_entities[1::2],
-                                            split_entities[2::2],
-                                            fillvalue=''):
+    for key, value in itertools.zip_longest(
+        split_entities[1::2], split_entities[2::2], fillvalue=''
+    ):
         if key:
             assert key[-1] == '-'
             key = key[:-1]
@@ -117,8 +124,11 @@ def parse_bids_name(name):
     """Parse any part of a BIDS basename (entities, suffix, extension)."""
     match = BIDS_PARTIAL_NAME_RE.match(name)
     if not match:
-        raise BIDSError(f"the target file name {name} cannot be parsed "
-                        f"according to BIDS".format(name))
+        raise BIDSError(
+            f'the target file name {name} cannot be parsed according to BIDS'.format(
+                name
+            )
+        )
     return (
         collections.OrderedDict(parse_bids_entities(match.group('entities'))),
         match.group('suffix') or '',
@@ -151,24 +161,28 @@ def compose_bids_name(entities, suffix, ext):
 
 def validate_bids_label(label):
     if not BIDS_LABEL_RE.match(label):
-        raise BIDSError(f'Invalid BIDS label {label!r}: must consist of '
-                        f'alphanumeric characters only (1 or more)')
+        raise BIDSError(
+            f'Invalid BIDS label {label!r}: must consist of '
+            f'alphanumeric characters only (1 or more)'
+        )
 
 
 def validate_metadata_dict(value):
     """Validate the additional metadata in each element of to_import."""
     if not isinstance(value[3], dict):
         raise BIDSError(
-            "the fourth value of each element of to_import "
-            f"must be a dictionary (offending value is {value[3]!r})"
+            'the fourth value of each element of to_import '
+            f'must be a dictionary (offending value is {value[3]!r})'
         )
     try:
         json.dumps(value)
     except TypeError:
-        raise BIDSError("the fourth value of each element of "
-                        "to_import must be a JSON object (a python "
-                        "dict with string keys and JSON-compatible "
-                        "values)")
+        raise BIDSError(
+            'the fourth value of each element of '
+            'to_import must be a JSON object (a python '
+            'dict with string keys and JSON-compatible '
+            'values)'
+        )
 
 
 def add_entities(bids_basename, new_entities_str):
@@ -187,11 +201,13 @@ def set_entities(base_entities, new_entities, override_policy='override'):
             if override_policy == 'override':
                 pass
             elif override_policy == 'warn':
-                logger.warning('replacing %s-%s with %s-%s',
-                               key, base_entities[key], key, value)
+                logger.warning(
+                    'replacing %s-%s with %s-%s', key, base_entities[key], key, value
+                )
             elif override_policy == 'raise':
-                raise RuntimeError(f'entity {key} already exists and '
-                                   'overriding is disabled')
+                raise RuntimeError(
+                    f'entity {key} already exists and overriding is disabled'
+                )
             else:
                 raise ValueError('invalid value for override_policy')
             base_entities[key] = value

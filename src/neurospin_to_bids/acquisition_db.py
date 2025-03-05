@@ -55,9 +55,9 @@ FILENAME_ILLEGAL_CHARS = '\\/:*?"<>|_ \t\r\n\0'
 FILENAME_CLEANUP_TABLE = {ord(char): '-' for char in FILENAME_ILLEGAL_CHARS}
 
 GLOB_SPECIAL_CHARS = '*?[!]'
-GLOB_CLEANUP_TABLE = {ord(char): '-'
-                      for char in (set(FILENAME_ILLEGAL_CHARS)
-                                   - set(GLOB_SPECIAL_CHARS))}
+GLOB_CLEANUP_TABLE = {
+    ord(char): '-' for char in (set(FILENAME_ILLEGAL_CHARS) - set(GLOB_SPECIAL_CHARS))
+}
 
 
 def canonicalize_filename(text):
@@ -84,18 +84,19 @@ def get_session_path(scanner, acq_date, nip):
         return session_paths[0]
     elif len(session_paths) == 0:
         raise DataError(
-            f"no directory found for given NIP {nip} in {scanner} on "
-            f"{acq_date}"
+            f'no directory found for given NIP {nip} in {scanner} on {acq_date}'
         )
     else:
         raise DataError(
-            "multiple paths for given NIP {nip} in {scanner} on {acq_date}: "
-            "[{dirs_found}] - please mention the session of the subject "
-            "for this date after the NIP, 2 sessions for the same subject "
-            "the same day are possible."
-            .format(nip=nip, scanner=scanner, acq_date=acq_date,
-                    dirs_found=", ".join(os.path.basename(dir)
-                                         for dir in session_paths))
+            'multiple paths for given NIP {nip} in {scanner} on {acq_date}: '
+            '[{dirs_found}] - please mention the session of the subject '
+            'for this date after the NIP, 2 sessions for the same subject '
+            'the same day are possible.'.format(
+                nip=nip,
+                scanner=scanner,
+                acq_date=acq_date,
+                dirs_found=', '.join(os.path.basename(dir) for dir in session_paths),
+            )
         )
 
 
@@ -120,8 +121,7 @@ def get_session_paths(scanner, acq_date, nip):
             return []
     else:  # MRI
         date_dir = os.path.join(db_path, acq_date)
-        return glob.glob(os.path.join(glob.escape(date_dir),
-                                      glob.escape(nip) + '*'))
+        return glob.glob(os.path.join(glob.escape(date_dir), glob.escape(nip) + '*'))
 
 
 def list_dicom_series(session_dir):
