@@ -42,7 +42,8 @@ def get_database_path(scanner):
         relative_db_path = NEUROSPIN_DATABASES[scanner.strip().lower()]
     except KeyError:
         scanners = ', '.join(NEUROSPIN_DATABASES.keys())
-        raise UserError(f'invalid scanner {scanner!r}, must be one of {{{scanners}}}')
+        raise UserError(f'invalid scanner {scanner!r}, must be one of '
+                        f'{scanners}')
     return os.path.join(ACQUISITION_ROOT_PATH, relative_db_path)
 
 
@@ -72,7 +73,7 @@ def canonicalize_glob_pattern(pattern):
 
 
 def get_session_path(scanner, acq_date, nip):
-    """Get the path to the directory containing data from one acquisition session
+    """Get path to the directory containing data from one acquisition session
 
     scanner (str): valid choices are the members of NEUROSPIN_DATABASES.keys()
     acq_date (str): the acquisition date in YYYYMMDD format
@@ -101,7 +102,7 @@ def get_session_path(scanner, acq_date, nip):
 
 
 def get_session_paths(scanner, acq_date, nip):
-    """Get the path to the directory containing data from acquisition session(s)
+    """Get path to the directory containing data from acquisition session(s)
 
     scanner (str): valid choices are the members of NEUROSPIN_DATABASES.keys()
     acq_date (str): the acquisition date in YYYYMMDD format
