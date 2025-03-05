@@ -1,3 +1,26 @@
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff.lint]
+extend-select = [
+    "B",
+    "C4",
+    "ISC",
+    "LOG",
+    "PIE",
+    "PYI",
+    "SIM",
+    "FLY",
+    "I",
+    "PGH",
+    "PLE",
+    "UP",
+    "FURB",
+    "RUF",
+]
+ignore = [
+    "B028",
+    "B904",
+    "PIE790",
+]
