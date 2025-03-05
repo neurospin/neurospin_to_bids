@@ -6,7 +6,6 @@ import os.path
 
 from .utils import DataError, UserError
 
-
 logger = logging.getLogger()
 
 

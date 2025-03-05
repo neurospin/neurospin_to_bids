@@ -15,19 +15,14 @@ from pathlib import Path
 
 import mne
 import pandas as pd
-import yaml
+import pkg_resources
 import pydeface.utils as pdu
+import yaml
 from bids_validator import BIDSValidator
 from mne_bids import make_dataset_description, write_raw_bids
-import pkg_resources
 
-from . import acquisition_db
-from . import bids
-from . import exp_info
-from . import postprocess
-from . import utils
+from . import acquisition_db, bids, exp_info, postprocess, utils
 from .utils import DataError, UserError, yes_no
-
 
 logger = logging.getLogger(__name__)
 

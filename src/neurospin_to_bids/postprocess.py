@@ -15,7 +15,6 @@ import re
 
 from . import bids
 
-
 logger = logging.getLogger(__name__)
 
 # Recognize a filename with "postfixes" added by dcm2niix (_ph, _e1...)

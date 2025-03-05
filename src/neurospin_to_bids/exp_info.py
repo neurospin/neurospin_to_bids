@@ -9,10 +9,8 @@ import logging
 import os
 import re
 
-from . import bids
-from . import utils
+from . import bids, utils
 from .utils import UserError
-
 
 logger = logging.getLogger(__name__)
 

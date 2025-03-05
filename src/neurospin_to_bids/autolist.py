@@ -16,10 +16,7 @@ import os
 
 import yaml
 
-from . import acquisition_db
-from . import bids
-from . import exp_info
-
+from . import acquisition_db, bids, exp_info
 
 logger = logging.getLogger(__name__)
 

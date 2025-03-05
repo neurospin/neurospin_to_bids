@@ -2,9 +2,9 @@ import collections.abc
 import logging
 import shutil
 
-import neurospin_to_bids.__main__
-
 import yaml
+
+import neurospin_to_bids.__main__
 
 
 def test_simple_import_mri(tmp_path, caplog):
