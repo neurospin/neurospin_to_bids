@@ -24,3 +24,6 @@ ignore = [
     "B904",
     "PIE790",
 ]
+
+[tool.ruff.format]
+quote-style = "single"
