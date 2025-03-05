@@ -116,6 +116,6 @@ def rename_files_recursively(bids_root_dir, dry_run=False):
                                     'sub-*', 'ses-*', '*', '*')),
             glob.iglob(os.path.join(glob.escape(bids_root_dir),
                                     'sub-*', '*', '*'))):
-        if ((filename.endswith('.nii') or filename.endswith('.nii.gz'))
+        if ((filename.endswith(('.nii', '.nii.gz')))
                 and os.path.isfile(filename)):
             rename_file_with_postfixes(filename, dry_run=dry_run)
