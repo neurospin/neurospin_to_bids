@@ -255,10 +255,11 @@ def bids_acquisition_download(data_root_path='',
     report_path = os.path.join(data_root_path, 'report')
     if not os.path.exists(report_path):
         os.makedirs(report_path)
-    download_report = open(os.path.join(report_path, download_report), 'w')
-    # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id',
-    # ~                               'download_file')
-    # ~ download_report.write(report_line)
+    with open(os.path.join(report_path, download_report), 'w') as download_report:
+        pass
+        # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id',
+        # ~                               'download_file')
+        # ~ download_report.write(report_line)
     list_imported = []
     list_already_imported = []
     list_warning = []
