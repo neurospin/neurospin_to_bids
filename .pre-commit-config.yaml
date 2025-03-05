@@ -4,7 +4,7 @@ repos:
     -   id: check-useless-excludes
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v5.0.0
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
@@ -24,13 +24,15 @@ repos:
     -   id: trailing-whitespace
 
 -   repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+    rev: 7.1.2
     hooks:
     -   id: flake8
         additional_dependencies: [pep8-naming]
-        language_version: python3
 
 -   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.47"
+    rev: "0.50"
     hooks:
     -   id: check-manifest
+
+ci:
+    autoupdate_schedule: monthly
