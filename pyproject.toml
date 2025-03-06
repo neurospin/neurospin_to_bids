@@ -13,6 +13,7 @@ extend-select = [
     "SIM",
     "FLY",
     "I",
+    "N",
     "PGH",
     "PLE",
     "UP",
@@ -22,6 +23,7 @@ extend-select = [
 ignore = [
     "B028",
     "B904",
+    "N802",  # Gives false positives when a name contains an uppercase acronym
     "PIE790",
 ]
 
