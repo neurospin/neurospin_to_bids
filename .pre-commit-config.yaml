@@ -4,7 +4,7 @@ repos:
     -   id: check-useless-excludes
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v5.0.0
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
@@ -30,6 +30,9 @@ repos:
     -   id: ruff-format
 
 -   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.47"
+    rev: "0.50"
     hooks:
     -   id: check-manifest
+
+ci:
+    autoupdate_schedule: monthly

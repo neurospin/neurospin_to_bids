@@ -1,5 +1,5 @@
 # Ensure compatibility with the production environment
--c production.txt
+-c py3.8-production.txt
 
 # Add packages that are used for testing
 pytest
