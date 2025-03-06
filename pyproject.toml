@@ -1,9 +1,58 @@
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools"]  # >= 61
 build-backend = "setuptools.build_meta"
 
-[tool.ruff]
-target-version = "py38"  # FIXME: remove once setup.cfg is migrated into pyproject.toml
+[project]
+name = "neurospin_to_bids"
+version = "0.1.0"
+description = "Tool for exporting imaging data from the NeuroSpin archive in BIDS format"
+authors = [
+    {name = "Isabelle Denghien", email = "isabelle.denghien@cea.fr"},
+]
+dependencies = [
+    "PyYAML",
+    "bids-validator",
+    "logutils",
+    "mne-bids",
+    "pandas",
+    "pydeface",
+    "pydicom",
+    "setuptools",  # actually a dependency of pydeface (for pkg_resources)
+]
+requires-python = "~=3.8"
+readme = "README.md"
+classifiers = [
+    "License :: CeCILL-B Free Software License Agreement (CECILL-B)",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+[project.urls]
+Homepage = "https://github.com/neurospin/neurospin_to_bids"
+
+[project.optional-dependencies]
+dev = [
+    "pip-tools",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "tox >= 4.4.0",
+]
+
+[project.scripts]
+neurospin_to_bids = "neurospin_to_bids.__main__:main"
+
+[tool.setuptools.package-data]
+neurospin_to_bids = [
+    "template_deface/*.nii.gz",
+]
+
+[tool.codespell]
+skip = [".tox"]
 
 [tool.ruff.lint]
 extend-select = [
