@@ -270,255 +270,263 @@ def bids_acquisition_download(
     if not os.path.exists(report_path):
         os.makedirs(report_path)
     with open(os.path.join(report_path, download_report), 'w') as download_report:
-        pass
         # ~ report_line = '%s,%s,%s\n' % ('subject_id', 'session_id',
         # ~                               'download_file')
         # ~ download_report.write(report_line)
-    list_imported = []
-    list_already_imported = []
-    list_warning = []
+        list_imported = []
+        list_already_imported = []
+        list_warning = []
 
-    # Create a dataFrame to store participant information
-    # ~ df_participant = pd.DataFrame()
-    # Dict for info participant
-    # ~ list_all_participants = {}
-    dic_info_participants = OrderedDict()
+        # Create a dataFrame to store participant information
+        # ~ df_participant = pd.DataFrame()
+        # Dict for info participant
+        # ~ list_all_participants = {}
+        dic_info_participants = OrderedDict()
 
-    # List for the bacth file for dc2nii_batch command
-    infiles_dcm2nii = []
+        # List for the bacth file for dc2nii_batch command
+        infiles_dcm2nii = []
 
-    # List for data to deface
-    files_for_pydeface = []
+        # List for data to deface
+        files_for_pydeface = []
 
-    # Dict of descriptors to be added
-    dict_descriptors = {}
+        # Dict of descriptors to be added
+        dict_descriptors = {}
 
-    gz_ext = '' if no_gz else '.gz'
+        gz_ext = '' if no_gz else '.gz'
 
-    ####################################
-    # GETTING INFORMATION TO DOWNLOAD
-    ####################################
+        ####################################
+        # GETTING INFORMATION TO DOWNLOAD
+        ####################################
 
-    # Download command for each subject/session
-    # one line has the following information
-    # participant_id / NIP / infos_participant / session_label / acq_date /
-    # location / to_import
+        # Download command for each subject/session
+        # one line has the following information
+        # participant_id / NIP / infos_participant / session_label / acq_date /
+        # location / to_import
 
-    # Read the participants_to_import.tsv file for getting subjects/sessions to
-    # download
-    pti_filename = exp_info.find_participants_to_import_tsv(exp_info_path)
-    for subject_info in exp_info.iterate_participants_list(pti_filename):
-        logger.debug('Now handling:\n%s', subject_info)
-        sub_entity = subject_info['subject_label']
-        ses_entity = subject_info.get('session_label', '')
+        # Read the participants_to_import.tsv file for getting subjects/sessions to
+        # download
+        pti_filename = exp_info.find_participants_to_import_tsv(exp_info_path)
+        for subject_info in exp_info.iterate_participants_list(pti_filename):
+            logger.debug('Now handling:\n%s', subject_info)
+            sub_entity = subject_info['subject_label']
+            ses_entity = subject_info.get('session_label', '')
 
-        # Fill the partcipant information for the participants_to_import.tsv
-        info_participant = subject_info['infos_participant']
-        if sub_entity in dic_info_participants:
-            existing_items = dic_info_participants[sub_entity]
-            # Existing items take precedence over new values
-            info_participant.update(existing_items)
-        dic_info_participants[sub_entity] = info_participant
+            # Fill the partcipant information for the participants_to_import.tsv
+            info_participant = subject_info['infos_participant']
+            if sub_entity in dic_info_participants:
+                existing_items = dic_info_participants[sub_entity]
+                # Existing items take precedence over new values
+                info_participant.update(existing_items)
+                dic_info_participants[sub_entity] = info_participant
 
-        sub_path = os.path.join(target_root_path, sub_entity, ses_entity)
-        sourcedata_sub_path = os.path.join(sourcedata_path, sub_entity, ses_entity)
-        if not os.path.exists(sub_path):
-            os.makedirs(sub_path)
+            sub_path = os.path.join(target_root_path, sub_entity, ses_entity)
+            sourcedata_sub_path = os.path.join(sourcedata_path, sub_entity, ses_entity)
+            if not os.path.exists(sub_path):
+                os.makedirs(sub_path)
 
-        # Avoid redownloading subjects/sessions
-        if not force_download:
-            check_file = os.path.join(sub_path, 'downloaded')
-            if os.path.isfile(check_file):
-                continue
-
-        # Date in format used by /neurospin/acquisition: YYYYMMDD
-        acq_date = subject_info['acq_date'].strftime('%Y%m%d')
-
-        # nip number
-        nip = subject_info['NIP']
-
-        # Retrieve list of list for seqs to import
-        # One tuple is configured as :(file_to_import;acq_folder;acq_name)
-        # value[0] : num of seq
-        # value[1] : modality
-        # value[2] : part of ht file_name
-        seqs_to_retrieve = subject_info['to_import']
-        logger.debug(
-            'to_import for %s on %s: %s', nip, acq_date, json.dumps(seqs_to_retrieve)
-        )
-        # Convert the first element if there is only one sequence, otherwise
-        # each value will be used as str and note tuple).
-        if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
-            seqs_to_retrieve = [seqs_to_retrieve]
-
-        # download data, store information in batch files for anat/fmri
-        # download data for meg data
-        for value in seqs_to_retrieve:
-            try:
-                exp_info.validate_element_to_import(value)
-            except exp_info.ValidationError as exc:
-                logger.error(
-                    'for subject %s on %s, skipping import of a sequence: %s',
-                    nip,
-                    acq_date,
-                    str(exc),
-                )
-
-            target_path = os.path.join(sub_path, value[1])
-            sourcedata_target_path = os.path.join(sourcedata_sub_path, value[1])
-            if not os.path.exists(target_path):
-                os.makedirs(target_path)
-
-            target_filename = bids.add_entities(value[2], sub_entity + '_' + ses_entity)
-
-            # MEG CASE
-            if value[1] == 'meg':
-                # Create subject path if necessary
-                meg_path = os.path.join(sub_path, 'meg')
-                if not os.path.exists(meg_path):
-                    os.makedirs(meg_path)
-
-                meg_file = os.path.join(
-                    acquisition_db.get_database_path(subject_info['location']),
-                    nip,
-                    subject_info['acq_date'].strftime('%y%m%d'),
-                    value[0],
-                )
-                logger.info(meg_file)
-
-                raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
-
-                write_raw_bids(raw, target_filename, target_path, overwrite=True)
-                # add event
-                # create json file
-                # copy the subject emptyroom
-
-            # MRI CASE
-            # todo: bad practices, to refactor for the sake of simplicity
-            else:
-                download = True
-                dicom_paths = []
-                path_file_glob = ''
-                try:
-                    nip_dir = acquisition_db.get_session_path(
-                        subject_info['location'], acq_date, nip
-                    )
-                except DataError as exc:
-                    list_warning.append(str(exc))
-                    download = False
+            # Avoid redownloading subjects/sessions
+            if not force_download:
+                check_file = os.path.join(sub_path, 'downloaded')
+                if os.path.isfile(check_file):
                     continue
-                path_file_glob = os.path.join(nip_dir, f'{int(value[0]):06d}_*')
-                dicom_paths = glob.glob(path_file_glob)
 
-                if not dicom_paths and download:
-                    list_warning.append('file not found ' + path_file_glob)
-                elif download:
-                    dicom_path = dicom_paths[0]
-                    list_imported.append('importation of ' + dicom_path)
+            # Date in format used by /neurospin/acquisition: YYYYMMDD
+            acq_date = subject_info['acq_date'].strftime('%Y%m%d')
 
-                    if value[1] == 'anat' and deface:
-                        logger.info('\n Deface with pydeface')
-                        files_for_pydeface.append(
-                            os.path.join(target_path, target_filename + '.nii' + gz_ext)
-                        )
+            # nip number
+            nip = subject_info['NIP']
 
-                    # append list for preparing the batch importation
-                    file_to_convert = {
-                        'in_dir': dicom_path,
-                        'out_dir': target_path,
-                        'filename': os.path.splitext(target_filename)[0],
-                    }
-                    is_file_to_import = os.path.join(
-                        os.getcwd(), target_path, target_filename + '.nii' + gz_ext
+            # Retrieve list of list for seqs to import
+            # One tuple is configured as :(file_to_import;acq_folder;acq_name)
+            # value[0] : num of seq
+            # value[1] : modality
+            # value[2] : part of ht file_name
+            seqs_to_retrieve = subject_info['to_import']
+            logger.debug(
+                'to_import for %s on %s: %s',
+                nip,
+                acq_date,
+                json.dumps(seqs_to_retrieve),
+            )
+            # Convert the first element if there is only one sequence, otherwise
+            # each value will be used as str and note tuple).
+            if len(seqs_to_retrieve) > 0 and isinstance(seqs_to_retrieve[0], str):
+                seqs_to_retrieve = [seqs_to_retrieve]
+
+            # download data, store information in batch files for anat/fmri
+            # download data for meg data
+            for value in seqs_to_retrieve:
+                try:
+                    exp_info.validate_element_to_import(value)
+                except exp_info.ValidationError as exc:
+                    logger.error(
+                        'for subject %s on %s, skipping import of a sequence: %s',
+                        nip,
+                        acq_date,
+                        str(exc),
                     )
-                    logger.debug('is_file_to_import=%s', is_file_to_import)
-                    if os.path.isfile(is_file_to_import):
-                        list_already_imported.append(
-                            f'already imported: {is_file_to_import}'
-                        )
-                    else:
-                        infiles_dcm2nii.append(file_to_convert)
 
-                    # Create the symlink in sourcedata
-                    sourcedata_link = os.path.join(
-                        sourcedata_target_path, file_to_convert['filename']
+                target_path = os.path.join(sub_path, value[1])
+                sourcedata_target_path = os.path.join(sourcedata_sub_path, value[1])
+                if not os.path.exists(target_path):
+                    os.makedirs(target_path)
+
+                target_filename = bids.add_entities(
+                    value[2], sub_entity + '_' + ses_entity
+                )
+
+                # MEG CASE
+                if value[1] == 'meg':
+                    # Create subject path if necessary
+                    meg_path = os.path.join(sub_path, 'meg')
+                    if not os.path.exists(meg_path):
+                        os.makedirs(meg_path)
+
+                    meg_file = os.path.join(
+                        acquisition_db.get_database_path(subject_info['location']),
+                        nip,
+                        subject_info['acq_date'].strftime('%y%m%d'),
+                        value[0],
                     )
+                    logger.info(meg_file)
+
+                    raw = mne.io.read_raw_fif(meg_file, allow_maxshield=True)
+
+                    write_raw_bids(raw, target_filename, target_path, overwrite=True)
+                    # add event
+                    # create json file
+                    # copy the subject emptyroom
+
+                # MRI CASE
+                # todo: bad practices, to refactor for the sake of simplicity
+                else:
+                    download = True
+                    dicom_paths = []
+                    path_file_glob = ''
                     try:
-                        link_already_exists = os.path.samefile(
-                            sourcedata_link, dicom_path
+                        nip_dir = acquisition_db.get_session_path(
+                            subject_info['location'], acq_date, nip
                         )
-                    except FileNotFoundError:
-                        link_already_exists = False
-                    if not link_already_exists:
+                    except DataError as exc:
+                        list_warning.append(str(exc))
+                        download = False
+                        continue
+                    path_file_glob = os.path.join(nip_dir, f'{int(value[0]):06d}_*')
+                    dicom_paths = glob.glob(path_file_glob)
+
+                    if not dicom_paths and download:
+                        list_warning.append('file not found ' + path_file_glob)
+                    elif download:
+                        dicom_path = dicom_paths[0]
+                        list_imported.append('importation of ' + dicom_path)
+
+                        if value[1] == 'anat' and deface:
+                            logger.info('\n Deface with pydeface')
+                            files_for_pydeface.append(
+                                os.path.join(
+                                    target_path, target_filename + '.nii' + gz_ext
+                                )
+                            )
+
+                        # append list for preparing the batch importation
+                        file_to_convert = {
+                            'in_dir': dicom_path,
+                            'out_dir': target_path,
+                            'filename': os.path.splitext(target_filename)[0],
+                        }
+                        is_file_to_import = os.path.join(
+                            os.getcwd(), target_path, target_filename + '.nii' + gz_ext
+                        )
+                        logger.debug('is_file_to_import=%s', is_file_to_import)
+                        if os.path.isfile(is_file_to_import):
+                            list_already_imported.append(
+                                f'already imported: {is_file_to_import}'
+                            )
+                        else:
+                            infiles_dcm2nii.append(file_to_convert)
+
+                        # Create the symlink in sourcedata
+                        sourcedata_link = os.path.join(
+                            sourcedata_target_path, file_to_convert['filename']
+                        )
                         try:
-                            if os.path.islink(sourcedata_link):
-                                os.unlink(sourcedata_link)
-                            os.makedirs(sourcedata_target_path, exist_ok=True)
-                            os.symlink(
-                                dicom_path, sourcedata_link, target_is_directory=True
+                            link_already_exists = os.path.samefile(
+                                sourcedata_link, dicom_path
                             )
-                        except OSError:
-                            logger.error(
-                                'could not create a sourcedata symlink %s -> %s',
-                                sourcedata_target_path,
-                                dicom_path,
-                            )
+                        except FileNotFoundError:
+                            link_already_exists = False
+                        if not link_already_exists:
+                            try:
+                                if os.path.islink(sourcedata_link):
+                                    os.unlink(sourcedata_link)
+                                    os.makedirs(sourcedata_target_path, exist_ok=True)
+                                    os.symlink(
+                                        dicom_path,
+                                        sourcedata_link,
+                                        target_is_directory=True,
+                                    )
+                            except OSError:
+                                logger.error(
+                                    'could not create a sourcedata symlink %s -> %s',
+                                    sourcedata_target_path,
+                                    dicom_path,
+                                )
 
-                    # Add descriptor(s) into the json file
-                    filename_json = os.path.join(
-                        target_path, os.path.splitext(target_filename)[0] + '.json'
-                    )
-                    entities, _, _ = bids.parse_bids_name(target_filename)
-                    task = entities.get('task')
-                    if task:
-                        dict_descriptors.update(
-                            {
-                                filename_json: {
-                                    'TaskName': task,
-                                }
-                            }
+                        # Add descriptor(s) into the json file
+                        filename_json = os.path.join(
+                            target_path, os.path.splitext(target_filename)[0] + '.json'
                         )
+                        entities, _, _ = bids.parse_bids_name(target_filename)
+                        task = entities.get('task')
+                        if task:
+                            dict_descriptors.update(
+                                {
+                                    filename_json: {
+                                        'TaskName': task,
+                                    }
+                                }
+                            )
 
-                    if len(value) == 4:
-                        dict_descriptors.update({filename_json: value[3]})
+                        if len(value) == 4:
+                            dict_descriptors.update({filename_json: value[3]})
 
-    # Importation and conversion of dicom files
-    dcm2nii_batch = {
-        'Options': {
-            'isGz': not no_gz,
-            'isFlipY': data_orientation != 'dicom',  # default is True
-            'isVerbose': False,
-            'isCreateBIDS': True,
-            'isOnlySingleFile': False,
-        },
-        'Files': infiles_dcm2nii,
-    }
+        # Importation and conversion of dicom files
+        dcm2nii_batch = {
+            'Options': {
+                'isGz': not no_gz,
+                'isFlipY': data_orientation != 'dicom',  # default is True
+                'isVerbose': False,
+                'isCreateBIDS': True,
+                'isOnlySingleFile': False,
+            },
+            'Files': infiles_dcm2nii,
+        }
 
-    dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
-    with open(dcm2nii_batch_file, 'w') as f:
-        yaml.dump(dcm2nii_batch, f)
+        dcm2nii_batch_file = os.path.join(exp_info_path, 'batch_dcm2nii.yaml')
+        with open(dcm2nii_batch_file, 'w') as f:
+            yaml.dump(dcm2nii_batch, f)
 
-    report_lines = ['-' * 80]
-    for i in list_already_imported:
-        report_lines.append(i)
-        download_report.write(i)
-    if list_already_imported:
-        report_lines.append('-' * 80)
-    for i in list_imported:
-        report_lines.append(i)
-        download_report.write(i)
-    report_lines.append('-' * 80)
-    logger.info('Summary of importation:\n%s', '\n'.join(report_lines))
+        report_lines = ['-' * 80]
+        for i in list_already_imported:
+            report_lines.append(i)
+            download_report.write(i)
+        if list_already_imported:
+            report_lines.append('-' * 80)
+        for i in list_imported:
+            report_lines.append(i)
+            download_report.write(i)
+            report_lines.append('-' * 80)
+            logger.info('Summary of importation:\n%s', '\n'.join(report_lines))
 
-    report_lines = []
-    for i in list_warning:
-        report_lines.append('- ' + i)
-        download_report.write('\n  WARNING: ' + i)
-    if report_lines:
-        logger.warning(
-            'Warnings:\n%s\n%s\n%s', '-' * 80, '\n'.join(report_lines), '-' * 80
-        )
-    download_report.close()
+        report_lines = []
+        for i in list_warning:
+            report_lines.append('- ' + i)
+            download_report.write('\n  WARNING: ' + i)
+        if report_lines:
+            logger.warning(
+                'Warnings:\n%s\n%s\n%s', '-' * 80, '\n'.join(report_lines), '-' * 80
+            )
+        # download_report.close()
 
     if list_warning:
         do_continue = yes_no(
