@@ -23,11 +23,11 @@ repos:
         args: ["--remove"]
     -   id: trailing-whitespace
 
--   repo: https://github.com/pycqa/flake8
-    rev: 7.1.2
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
     hooks:
-    -   id: flake8
-        additional_dependencies: [pep8-naming]
+    -   id: ruff
+    -   id: ruff-format
 
 -   repo: https://github.com/mgedmin/check-manifest
     rev: "0.50"

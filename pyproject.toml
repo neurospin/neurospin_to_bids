@@ -1,3 +1,31 @@
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff.lint]
+extend-select = [
+    "B",
+    "C4",
+    "ISC",
+    "LOG",
+    "PIE",
+    "PYI",
+    "SIM",
+    "FLY",
+    "I",
+    "N",
+    "PGH",
+    "PLE",
+    "UP",
+    "FURB",
+    "RUF",
+]
+ignore = [
+    "B028",
+    "B904",
+    "N802",  # Gives false positives when a name contains an uppercase acronym
+    "PIE790",
+]
+
+[tool.ruff.format]
+quote-style = "single"

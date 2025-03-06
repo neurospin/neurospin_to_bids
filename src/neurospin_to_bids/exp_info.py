@@ -9,10 +9,8 @@ import logging
 import os
 import re
 
-from . import bids
-from . import utils
+from . import bids, utils
 from .utils import UserError
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +22,7 @@ NIP_RE = re.compile('^([a-z]{2}[0-9]{6})(_[0-9]+)?(_[0-9]+)?$')
 
 class ValidationError(Exception):
     """Exception raised for malformed input data."""
+
     pass
 
 
@@ -36,7 +35,7 @@ def parse_bids_entity(entity_or_label, *, key):
     """
     try:
         if entity_or_label.startswith(key + '-'):
-            bids.validate_bids_label(entity_or_label[(len(key)+1):])
+            bids.validate_bids_label(entity_or_label[(len(key) + 1) :])
             return entity_or_label
         else:
             bids.validate_bids_label(entity_or_label)
@@ -51,8 +50,9 @@ def validate_NIP(nip):
     ValidationError is raised if the value is invalid
     """
     if not NIP_RE.match(nip):
-        raise ValidationError('Invalid NIP or NIP_AcquisitionNumber_StudyID '
-                              'combination')
+        raise ValidationError(
+            'Invalid NIP or NIP_AcquisitionNumber_StudyID combination'
+        )
 
 
 def parse_acq_date(date_str):
@@ -72,8 +72,9 @@ def parse_acq_date(date_str):
         day = int(date_str[-2:])
         return datetime.date(year, month, day)
     except ValueError:
-        raise ValidationError('invalid acq_date, must be in YYYY-MM-DD, '
-                              'YYYYMMDD, or YYMMDD format')
+        raise ValidationError(
+            'invalid acq_date, must be in YYYY-MM-DD, YYYYMMDD, or YYMMDD format'
+        )
 
 
 def validate_to_import(to_import, deep=False):
@@ -83,7 +84,7 @@ def validate_to_import(to_import, deep=False):
     import process, unless `deep` is True.
     """
     if not isinstance(to_import, collections.abc.Collection):
-        raise ValidationError("to_import must be a list")
+        raise ValidationError('to_import must be a list')
     if deep:
         for value in to_import:
             validate_element_to_import(value)
@@ -92,26 +93,24 @@ def validate_to_import(to_import, deep=False):
 def validate_element_to_import(value):
     """Validate one element of the to_import list."""
     if not isinstance(value, collections.abc.Sequence):
-        raise ValidationError("each element of to_import must be a list or "
-                              "tuple")
+        raise ValidationError('each element of to_import must be a list or tuple')
     if not 3 <= len(value) <= 4:
-        raise ValidationError("each element of to_import must be of length 3 "
-                              "or 4")
+        raise ValidationError('each element of to_import must be of length 3 or 4')
     if not isinstance(value[0], (str, int)):
         raise ValidationError(
-            "the first value of each element of to_import "
-            "must be a string (for MEG) or integer (for "
-            f"MRI) (offending value is {value[0]!r})"
+            'the first value of each element of to_import '
+            'must be a string (for MEG) or integer (for '
+            f'MRI) (offending value is {value[0]!r})'
         )
     if not isinstance(value[1], str):
         raise ValidationError(
-            "the second value of each element of to_import "
-            f"must be a string (offending value is {value[1]!r})"
+            'the second value of each element of to_import '
+            f'must be a string (offending value is {value[1]!r})'
         )
     if not isinstance(value[2], str):
         raise ValidationError(
-            "the third value of each element of to_import "
-            f"must be a string (offending value is {value[2]!r})"
+            'the third value of each element of to_import '
+            f'must be a string (offending value is {value[2]!r})'
         )
     try:
         bids.validate_bids_partial_name(value[2])
@@ -147,8 +146,7 @@ def find_participants_to_import_tsv(exp_info_path, strict=False):
     """
     if not os.path.exists(exp_info_path):
         raise UserError('exp_info directory not found')
-    if os.path.isfile(os.path.join(exp_info_path,
-                                   'participants_to_import.tsv')):
+    if os.path.isfile(os.path.join(exp_info_path, 'participants_to_import.tsv')):
         return os.path.join(exp_info_path, 'participants_to_import.tsv')
     elif os.path.isfile(os.path.join(exp_info_path, 'participants.tsv')):
         # Legacy name of participants_to_import.tsv
@@ -173,24 +171,28 @@ def iterate_participants_list(filename, strict=False):
                 raise UserError('missing column %s in %s', column, filename)
         subject_label_header = reader.fieldnames[0]
         if subject_label_header in set(ALL_COLUMN_NAMES) - {'subject_label'}:
-            raise UserError('the first column of %s must contain the '
-                            'subject label, not %s', filename,
-                            subject_label_header)
+            raise UserError(
+                'the first column of %s must contain the subject label, not %s',
+                filename,
+                subject_label_header,
+            )
 
         for row in reader:
             try:
                 try:
                     # The new subject_label item must be first in the output
                     # OrderedDict, so we must recreate it.
-                    new_row = collections.OrderedDict({
-                        'subject_label': parse_bids_entity(
-                            row[subject_label_header].strip(), key='sub')
-                    })
+                    new_row = collections.OrderedDict(
+                        {
+                            'subject_label': parse_bids_entity(
+                                row[subject_label_header].strip(), key='sub'
+                            )
+                        }
+                    )
                     new_row.update(row)
                     row = new_row
                 except ValidationError as exc:
-                    raise ValidationError(
-                        f'invalid subject_label: {exc}') from exc
+                    raise ValidationError(f'invalid subject_label: {exc}') from exc
                 if subject_label_header != 'subject_label':
                     del row[subject_label_header]
 
@@ -200,31 +202,28 @@ def iterate_participants_list(filename, strict=False):
                 except ValidationError as exc:
                     # Warn but do not make it an error, because invalid NIPs
                     # (typos) may be present in the database
-                    logger.warning('%s, line %d: %s', filename,
-                                   reader.line_num, exc)
+                    logger.warning('%s, line %d: %s', filename, reader.line_num, exc)
 
                 if row.get('session_label'):
                     try:
                         row['session_label'] = parse_bids_entity(
-                            row['session_label'].strip(), key='ses')
+                            row['session_label'].strip(), key='ses'
+                        )
                     except ValidationError as exc:
-                        raise ValidationError(
-                            f'invalid session_label: {exc}') from exc
+                        raise ValidationError(f'invalid session_label: {exc}') from exc
 
-                infos_participant_txt = (
-                    row.get('infos_participant', '').strip()
-                )
+                infos_participant_txt = row.get('infos_participant', '').strip()
                 if infos_participant_txt:
                     try:
-                        row['infos_participant'] = json.loads(
-                            infos_participant_txt)
+                        row['infos_participant'] = json.loads(infos_participant_txt)
                     except json.JSONDecodeError as exc:
                         raise ValidationError(
                             'malformed JSON in infos_participant:\n'
                             + utils.pinpoint_json_error(exc)
                         )
-                    if not isinstance(row['infos_participant'],
-                                      collections.abc.Mapping):
+                    if not isinstance(
+                        row['infos_participant'], collections.abc.Mapping
+                    ):
                         raise ValidationError(
                             'infos_participant must be a JSON object '
                             '(i.e. a key-value dictionary)'
@@ -239,19 +238,27 @@ def iterate_participants_list(filename, strict=False):
                 if to_import_txt:
                     try:
                         row['to_import'] = ast.literal_eval(to_import_txt)
-                    except (ValueError, TypeError, SyntaxError, MemoryError,
-                            RecursionError) as exc:
+                    except (
+                        ValueError,
+                        TypeError,
+                        SyntaxError,
+                        MemoryError,
+                        RecursionError,
+                    ) as exc:
                         raise ValidationError(
-                            'cannot parse the to_import column: ' + str(exc))
+                            'cannot parse the to_import column: ' + str(exc)
+                        )
                 else:
                     row['to_import'] = []
                 validate_to_import(row['to_import'])
             except ValidationError as exc:
                 if strict:
-                    raise UserError(f'in {filename}, line {reader.line_num}: '
-                                    f'{exc}') from exc
+                    raise UserError(
+                        f'in {filename}, line {reader.line_num}: {exc}'
+                    ) from exc
                 else:
-                    logger.error('in %s, skipping line %d: %s', filename,
-                                 reader.line_num, exc)
+                    logger.error(
+                        'in %s, skipping line %d: %s', filename, reader.line_num, exc
+                    )
             else:
                 yield row

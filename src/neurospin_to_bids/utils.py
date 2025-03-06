@@ -9,6 +9,7 @@ class UserError(Exception):
 
     Contains a message describing the error.
     """
+
     pass
 
 
@@ -20,6 +21,7 @@ class DataError(Exception):
 
     Contains a message describing the error.
     """
+
     pass
 
 
@@ -33,11 +35,16 @@ def pinpoint_json_error(json_decode_error):
     doc = json_decode_error.doc
     start = pos - (PREFIX_LENGTH)
     if start < 0:
-        return (doc[:LINE_LENGTH]
-                + '\n' + ' ' * pos + '^ ' + json_decode_error.msg)
+        return doc[:LINE_LENGTH] + '\n' + ' ' * pos + '^ ' + json_decode_error.msg
     else:
-        return ('...' + doc[start:(start+LINE_LENGTH-len('...'))]
-                + '\n' + ' ' * (pos-start) + '^ ' + json_decode_error.msg)
+        return (
+            '...'
+            + doc[start : (start + LINE_LENGTH - len('...'))]
+            + '\n'
+            + ' ' * (pos - start)
+            + '^ '
+            + json_decode_error.msg
+        )
 
 
 NONINTERACTIVE = False
@@ -71,7 +78,7 @@ def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
     Returns:
         bool: Boolean answer to the yes/no question.
     """
-    valid = {"yes": True, "y": True, "no": False, "n": False}
+    valid = {'yes': True, 'y': True, 'no': False, 'n': False}
     if NONINTERACTIVE:
         if noninteractive is not None:
             return noninteractive
@@ -79,15 +86,17 @@ def yes_no(question: str, *, default=None, noninteractive=None) -> bool:
             try:
                 return valid[default]
             except KeyError:
-                raise ValueError("Missing or invalid default value, cannot "
-                                 "use noninteractive mode. You should use the "
-                                 "'default' or 'noninteractive' argument.")
+                raise ValueError(
+                    'Missing or invalid default value, cannot '
+                    'use noninteractive mode. You should use the '
+                    "'default' or 'noninteractive' argument."
+                )
     if default is None:
-        prompt = " [y/n] "
-    elif default == "yes":
-        prompt = " [Y/n] "
-    elif default == "no":
-        prompt = " [y/N] "
+        prompt = ' [y/n] '
+    elif default == 'yes':
+        prompt = ' [Y/n] '
+    elif default == 'no':
+        prompt = ' [y/N] '
     else:
         raise ValueError(f"invalid default answer: '{default}'")
 
