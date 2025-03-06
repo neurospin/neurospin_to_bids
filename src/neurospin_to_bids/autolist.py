@@ -103,7 +103,11 @@ def autolist_dicom_session(session_dir, autolist_config):
     """Generate rules for the to_import column for a given session."""
     series_list = sorted(acquisition_db.list_dicom_series(session_dir))
     logger.debug('List of DICOM series in %s: %s', session_dir, series_list)
-    match_list = list(_autolist_dicom_first_pass(series_list, autolist_config))
+    match_list = list(
+        _autolist_dicom_first_pass(
+            series_list, autolist_config, session_dir=session_dir
+        )
+    )
     _autolist_handle_repetitions(match_list, autolist_config)
     return _autolist_generate_to_import(match_list)
 
@@ -112,7 +116,7 @@ def rule_matches(rule, series_description):
     return fnmatch.fnmatchcase(series_description, rule['SeriesDescription'])
 
 
-def _autolist_dicom_first_pass(series_list, autolist_config):
+def _autolist_dicom_first_pass(series_list, autolist_config, session_dir='<unknown>'):
     rules = autolist_config['rules']
     consecutive_series_rule = None
     consecutive_next_series_number = None  # to prevent F821 flake8 warning
@@ -132,7 +136,7 @@ def _autolist_dicom_first_pass(series_list, autolist_config):
                         'in DICOM session %s, rules %d (%s) '
                         'and %d (%s) both match series %d (%s), '
                         'the first one takes precedence',
-                        '<unknown>',
+                        session_dir,
                         rule_matched,
                         rules[rule_matched]['SeriesDescription'],
                         rule_index,
