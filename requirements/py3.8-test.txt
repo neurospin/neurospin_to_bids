@@ -4,28 +4,25 @@
 #
 #    ./requirements/update.sh
 #
-coverage==7.2.7
+coverage==7.6.1
     # via pytest-cov
-exceptiongroup==1.1.1
+exceptiongroup==1.2.2
     # via pytest
 iniconfig==2.0.0
     # via pytest
-packaging==23.1
+packaging==24.2
     # via
     #   -c requirements/production.txt
     #   pytest
-pluggy==1.0.0
+pluggy==1.5.0
     # via pytest
-pytest==7.3.1
+pytest==8.3.5
     # via
     #   -r requirements/test.in
     #   pytest-cov
-pytest-cov==4.1.0
+pytest-cov==5.0.0
     # via -r requirements/test.in
-tomli==2.0.1
+tomli==2.2.1
     # via
     #   coverage
     #   pytest
-
-# Prevent 'pip-tools sync' from removing the neurospin-to-bids package...
-neurospin-to-bids
