@@ -2,6 +2,7 @@
 
 import argparse
 import glob
+import importlib.resources
 import json
 import logging
 import os
@@ -15,7 +16,6 @@ from pathlib import Path
 
 import mne
 import pandas as pd
-import pkg_resources
 import pydeface.utils as pdu
 import yaml
 from bids_validator import BIDSValidator
@@ -565,39 +565,30 @@ def bids_acquisition_download(
         # Data to deface
         # ~ print(files_for_pydeface)
         if files_for_pydeface:
-            try:
-                # warning: Isn't that too restrictive?
-                template = pkg_resources.resource_filename(
-                    pkg_resources.Requirement.parse('neurospin_to_bids'),
-                    'neurospin_to_bids/template_deface/mean_reg2mean.nii.gz',
+            with (
+                importlib.resources.path(
+                    'neurospin_to_bids.template_deface', 'mean_reg2mean.nii.gz'
+                ) as template,
+                importlib.resources.path(
+                    'neurospin_to_bids.template_deface', 'facemask.nii.gz'
+                ) as facemask,
+            ):
+                print(template)
+                os.environ['FSLDIR'] = '/drf/local/fsl/bin/'
+                os.environ['FSLOUTPUTTYPE'] = 'NIFTI_PAIR'
+                os.environ['PATH'] = (
+                    os.environ['FSLDIR'] + os.pathsep + os.environ['PATH']
                 )
-                facemask = pkg_resources.resource_filename(
-                    pkg_resources.Requirement.parse('neurospin_to_bids'),
-                    'neurospin_to_bids/template_deface/facemask.nii.gz',
-                )
-            except pkg_resources.DistributionNotFound:
-                template = (
-                    '/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/'
-                    'unicog-dev/bids/template_deface/mean_reg2mean.nii.gz'
-                )
-                facemask = (
-                    '/neurospin/unicog/protocols/IRMf/Unicogfmri/BIDS/'
-                    'unicog-dev/bids/template_deface/facemask.nii.gz'
-                )
-            print(template)
-            os.environ['FSLDIR'] = '/drf/local/fsl/bin/'
-            os.environ['FSLOUTPUTTYPE'] = 'NIFTI_PAIR'
-            os.environ['PATH'] = os.environ['FSLDIR'] + os.pathsep + os.environ['PATH']
 
-            for file_to_deface in files_for_pydeface:
-                print(f'\nDeface with pydeface {file_to_deface}')
-                pdu.deface_image(
-                    infile=file_to_deface,
-                    outfile=file_to_deface,
-                    facemask=facemask,
-                    template=template,
-                    force=True,
-                )
+                for file_to_deface in files_for_pydeface:
+                    print(f'\nDeface with pydeface {file_to_deface}')
+                    pdu.deface_image(
+                        infile=file_to_deface,
+                        outfile=file_to_deface,
+                        facemask=facemask,
+                        template=template,
+                        force=True,
+                    )
 
         # Create participants.tsv in dataset folder (take out NIP column)
         participants_path = os.path.join(target_root_path, 'participants.tsv')
