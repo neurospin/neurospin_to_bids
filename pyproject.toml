@@ -2,6 +2,9 @@
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
+[tool.ruff]
+target-version = "py38"  # FIXME: remove once setup.cfg is migrated into pyproject.toml
+
 [tool.ruff.lint]
 extend-select = [
     "B",

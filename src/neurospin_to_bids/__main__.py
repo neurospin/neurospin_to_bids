@@ -565,14 +565,11 @@ def bids_acquisition_download(
         # Data to deface
         # ~ print(files_for_pydeface)
         if files_for_pydeface:
-            with (
-                importlib.resources.path(
-                    'neurospin_to_bids.template_deface', 'mean_reg2mean.nii.gz'
-                ) as template,
-                importlib.resources.path(
-                    'neurospin_to_bids.template_deface', 'facemask.nii.gz'
-                ) as facemask,
-            ):
+            with importlib.resources.path(
+                'neurospin_to_bids.template_deface', 'mean_reg2mean.nii.gz'
+            ) as template, importlib.resources.path(
+                'neurospin_to_bids.template_deface', 'facemask.nii.gz'
+            ) as facemask:
                 print(template)
                 os.environ['FSLDIR'] = '/drf/local/fsl/bin/'
                 os.environ['FSLOUTPUTTYPE'] = 'NIFTI_PAIR'
