@@ -29,10 +29,5 @@ repos:
         args: ["--fix", "--show-fixes"]
     -   id: ruff-format
 
--   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.50"
-    hooks:
-    -   id: check-manifest
-
 ci:
     autoupdate_schedule: monthly
