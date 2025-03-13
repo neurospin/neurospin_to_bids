@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]  # >= 61
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -27,12 +27,16 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
 
 [project.urls]
 Homepage = "https://github.com/neurospin/neurospin_to_bids"
+Issues = "https://github.com/neurospin/neurospin_to_bids/issues"
 
 [project.optional-dependencies]
 dev = [
