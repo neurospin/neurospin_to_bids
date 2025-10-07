@@ -97,7 +97,7 @@ def validate_bids_partial_name(name):
     entities is not checked at the moment, but may be added in the future.
 
     """
-    entities, suffix, ext = parse_bids_name(name)
+    entities, _suffix, _ext = parse_bids_name(name)
     for key, value in entities.items():
         if not BIDS_LABEL_RE.match(value):
             warnings.warn(
