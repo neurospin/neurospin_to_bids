@@ -14,7 +14,7 @@ NEUROSPIN_DATABASES = {
     'trio': 'database/TrioTim',
     '7t': 'database/Investigational_Device_7T',
     'meg': 'neuromag/data',
-    '11.7t' : 'database/Investigational_Device_11_7T_fit_Minus'
+    '11.7t': 'database/Investigational_Device_11_7T_fit_Minus',
 }
 """Path of each scanner's database relative to /neurospin/acquisition."""
 
@@ -141,4 +141,3 @@ def list_dicom_series(session_dir):
         series_number = int(series_number)
         series_description = canonicalize_filename(series_description)
         yield (series_number, series_description)
-
