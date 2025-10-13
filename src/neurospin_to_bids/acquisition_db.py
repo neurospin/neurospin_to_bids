@@ -14,6 +14,7 @@ NEUROSPIN_DATABASES = {
     'trio': 'database/TrioTim',
     '7t': 'database/Investigational_Device_7T',
     'meg': 'neuromag/data',
+    '11.7t': 'database/Investigational_Device_11_7T_fit_Minus',
 }
 """Path of each scanner's database relative to /neurospin/acquisition."""
 
