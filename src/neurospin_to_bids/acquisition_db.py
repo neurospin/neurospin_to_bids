@@ -10,11 +10,13 @@ logger = logging.getLogger()
 
 
 NEUROSPIN_DATABASES = {
+    '11.7t': 'database/Investigational_Device_11_7T_fit_Minus',
+    'terrax': 'database/MAGNETOM Terra.X',
+    'cimax': 'database/MAGNETOM Cima.X',
     'prisma': 'database/Prisma_fit',
     'trio': 'database/TrioTim',
     '7t': 'database/Investigational_Device_7T',
     'meg': 'neuromag/data',
-    '11.7t': 'database/Investigational_Device_11_7T_fit_Minus',
 }
 """Path of each scanner's database relative to /neurospin/acquisition."""
 

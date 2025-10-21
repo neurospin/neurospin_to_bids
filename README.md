@@ -194,6 +194,9 @@ will be added to a new `participants.tsv` file included under the
 `rawdata` top folder.
 
 The location column corresponds to the MRI used. Three labels are possible:
+* '11.7t' for 'database/Investigational_Device_11_7T_fit_Minus',
+* 'terrax' for MAGNETOM Terra.X
+* 'cimax' for MAGNETOM Cima.X
 * 'prisma' for Prisma_fit
 * 'trio' for 'database/TrioTim'
 * '7t' for Investigational_Device_7T
