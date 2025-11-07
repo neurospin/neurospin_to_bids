@@ -11,8 +11,8 @@ logger = logging.getLogger()
 
 NEUROSPIN_DATABASES = {
     '11.7t': 'database/Investigational_Device_11_7T_fit_Minus',
-    'terrax': 'database/MAGNETOM Terra.X',
-    'cimax': 'database/MAGNETOM Cima.X',
+    'terrax': 'database/MAGNETOM_Terra.X',
+    'cimax': 'database/MAGNETOM_Cima.X',
     'prisma': 'database/Prisma_fit',
     'trio': 'database/TrioTim',
     '7t': 'database/Investigational_Device_7T',
