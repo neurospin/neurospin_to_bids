@@ -311,7 +311,7 @@ def bids_acquisition_download(
             sub_entity = subject_info['subject_label']
             ses_entity = subject_info.get('session_label', '')
 
-            # Fill the partcipant information for the participants_to_import.tsv
+            # Fill the participant information for the participants_to_import.tsv
             info_participant = subject_info['infos_participant']
             if sub_entity in dic_info_participants:
                 existing_items = dic_info_participants[sub_entity]
