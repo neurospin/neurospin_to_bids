@@ -19,7 +19,7 @@ dependencies = [
     "pydicom",
     "setuptools",  # actually a dependency of pydeface (for pkg_resources)
 ]
-requires-python = "~=3.8"
+requires-python = ">=3.8"
 readme = "README.md"
 classifiers = [
     "License :: CeCILL-B Free Software License Agreement (CECILL-B)",
@@ -107,4 +107,4 @@ exclude_also = [
 
     # Don't complain about abstract methods, they aren't run:
     "@(abc\\.)?abstractmethod",
-    ]
+]
