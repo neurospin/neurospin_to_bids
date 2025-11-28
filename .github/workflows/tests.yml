@@ -36,9 +36,7 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        # 2025-10-28 pin pip version < 25.3 because that version is incompatible with
-        # pip-tools until https://github.com/jazzband/pip-tools/issues/2252 is fixed
-        python -m pip install --upgrade 'pip<25.3'
+        python -m pip install --upgrade pip
         pip install tox tox-gh-actions
     - name: Test with tox
       run: |
