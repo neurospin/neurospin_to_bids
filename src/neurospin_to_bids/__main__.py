@@ -598,12 +598,12 @@ def bids_acquisition_download(
             # Adding a new key value pair in a json file such as taskname
             for k, v in dict_descriptors.items():
                 with open(k, 'r+') as json_file:
+                    temp_json = json.load(json_file)
                     for key, val in v.items():
-                        temp_json = json.load(json_file)
                         temp_json[key] = val
-                        json_file.seek(0)
-                        json.dump(temp_json, json_file)
-                        json_file.truncate()
+                    json_file.seek(0)
+                    json.dump(temp_json, json_file)
+                    json_file.truncate()
 
         # Copy recorded event files
         if copy_events:
