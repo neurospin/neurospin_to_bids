@@ -17,7 +17,7 @@ dependencies = [
     "pandas",
     "pydeface",
     "pydicom",
-    "setuptools",  # actually a dependency of pydeface (for pkg_resources)
+    "setuptools<82.0.0",  # dependency of pydeface (for pkg_resources)
 ]
 requires-python = ">=3.8"
 readme = "README.md"
