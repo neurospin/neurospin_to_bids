@@ -38,7 +38,7 @@ classifiers = [
 Homepage = "https://github.com/neurospin/neurospin_to_bids"
 Issues = "https://github.com/neurospin/neurospin_to_bids/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pip-tools",
     "pre-commit",
