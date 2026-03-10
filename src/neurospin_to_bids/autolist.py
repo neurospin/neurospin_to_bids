@@ -20,6 +20,32 @@ from . import acquisition_db, bids, exp_info
 logger = logging.getLogger(__name__)
 
 
+def get_serie_number_for_add_SerieDescription(side_seriedescription, series_number, series_list):
+    """ Get in the series_list the nearest index from the series_number to estimate the 
+    side_seriedescription['SeriesDescription'] file.
+
+    In autolist.yaml, all mbep2d-TR2-1pt2mm-PA files before mbep2d-TR2-1pt2mm-AP-LPP will be 
+    selected and the run number will be incremented :
+    {
+        'SeriesDescription': 'mbep2d-TR2-1pt2mm-AP-LPP[12345678]',
+        'data_type': 'func',
+        'bids_name': 'task-LPP_dir-ap_run-1_bold',
+        'add_file' : {'SeriesDescription': 'mbep2d-TR2-1pt2mm-PA', 
+        'bids_name' : 'task-LPP_dir-pa_run-1'},
+    }, 
+    """
+    val_serie_number = None
+
+    for index_serie_number, serie_number in enumerate(series_list):
+        # Search from the nearest file 
+        if serie_number[0] == series_number :
+            for i in range(index_serie_number, 0, -1):
+                if series_list[i][1] == side_seriedescription['SeriesDescription']:
+                    val_serie_number = series_list[i][0] 
+                    break
+
+    return(val_serie_number)
+
 def autolist_dicom(exp_info_path):
     """Create participants_to_import.tsv using autolist rules.
 
@@ -164,6 +190,24 @@ def _autolist_dicom_first_pass(series_list, autolist_config, session_dir='<unkno
                 if 'bids_name' in rule:
                     bids_name = rule['bids_name']
                     assert consecutive_series_rule is None
+                if 'add_file' in rule:
+                    add_SerieDescription = rule['add_file']
+                    add_series_number = get_serie_number_for_add_SerieDescription(add_SerieDescription, series_number, series_list)
+                    if add_series_number is not None:
+                        yield {
+                        'series_number': add_series_number,
+                        'data_type': data_type,
+                        'bids_name': add_SerieDescription['bids_name'],               
+                        'metadata': metadata,
+                        'rule_index': rule_index,
+                        }
+                    else:
+                        logger.error(
+                        'Serie number not found concerning the additional file %s' \
+                        'for %s',
+                        add_SerieDescription['SeriesDescription'],
+                        rule['SeriesDescription'],
+                        )
                 elif 'consecutive_series' in rule:
                     if consecutive_series_rule is not None:
                         assert consecutive_series_rule == rule_index
