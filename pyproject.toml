@@ -19,7 +19,7 @@ dependencies = [
     "pydicom",
     "setuptools<82.0.0",  # dependency of pydeface (for pkg_resources)
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 readme = "README.md"
 classifiers = [
     "License :: CeCILL-B Free Software License Agreement (CECILL-B)",
@@ -27,7 +27,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
