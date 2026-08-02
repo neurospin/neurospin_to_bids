@@ -1,29 +1,48 @@
 #!/bin/sh -e
 
-# Options passed to this script are passed on to pip-compile. Therefore,
-# dependencies can be upgraded to their latest version with:
-#
-#     ./requirements/update.sh -U
+# This script generates locked dependency files using uv.
+# Options passed to this script are forwarded to uv export.
+# Run with -U to upgrade all packages to latest versions.
 
-export CUSTOM_COMPILE_COMMAND=./requirements/update.sh
+# Get the directory where this script is located
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+REPO_ROOT=$(dirname "$SCRIPT_DIR")
 
-if python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 12) else 1)'; then
-  PY_VER=py3.12
-elif python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 10) else 1)'; then
-  PY_VER=py3.10
+# Detect Python version to determine which files to generate
+if python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 10) else 1)'; then
+  PY_VER=3.10
+elif python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 12) else 1)'; then
+  PY_VER=3.12
+elif python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 14) else 1)'; then
+  PY_VER=3.14
 else
-  echo "This script must be run either on Python 3.10 (to generate the dependency" >&2
-  echo "pinnings for Ubuntu 22.04) or Python 3.12 (to generate the dependency " >&2
-  echo "pinnings for Ubuntu 24.04 or later" >&2
+  echo "This script must be run with Python 3.10, 3.12, or 3.14" >&2
   exit 1
 fi
 
-# --strip-extras is necessary because we use requirements/*.txt as PIP
-# --constraint files (-c option)
-python -m piptools compile \
-       --allow-unsafe --strip-extras --resolver=backtracking \
-       --output-file=requirements/${PY_VER}-production.txt "$@"
-python -m piptools compile \
-       --allow-unsafe --strip-extras --resolver=backtracking \
-       --output-file=requirements/${PY_VER}-test.txt \
-       requirements/${PY_VER}-test.in "$@"
+echo "Generating requirements files for Python ${PY_VER}..."
+
+# Use a temporary directory to avoid polluting the repo with uv.lock
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+# Store the absolute path to requirements directory
+REQ_DIR="$REPO_ROOT/requirements"
+
+# Remove any symlinks so we can write actual files
+rm -f "$REQ_DIR/py${PY_VER}-production.txt" "$REQ_DIR/py${PY_VER}-test.txt"
+
+cp "$REPO_ROOT/pyproject.toml" "$TMPDIR/"
+cd "$TMPDIR"
+
+# Generate production requirements (no dev dependencies)
+uv export --python "$PY_VER" --format requirements.txt --no-dev \
+  -o "$REQ_DIR/py${PY_VER}-production.txt" "$@"
+
+# Generate test requirements (includes production + dev dependencies)
+# Note: The test.in file references production.txt as a constraint.
+# For simplicity, we export all dependencies including dev group.
+uv export --python "$PY_VER" --format requirements.txt --all-extras \
+  -o "$REQ_DIR/py${PY_VER}-test.txt" "$@"
+
+echo "Requirements files generated: $REQ_DIR/py${PY_VER}-production.txt $REQ_DIR/py${PY_VER}-test.txt"

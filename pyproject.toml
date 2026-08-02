@@ -41,11 +41,11 @@ Issues = "https://github.com/neurospin/neurospin_to_bids/issues"
 
 [dependency-groups]
 dev = [
-    "pip-tools<7.6",
     "pre-commit",
     "pytest",
     "pytest-cov",
     "tox >= 4.4.0",
+    "uv",
 ]
 
 [project.scripts]
