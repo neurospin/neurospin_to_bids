@@ -32,7 +32,10 @@ git clone https://github.com/neurospin/neurospin_to_bids.git
 cd neurospin_to_bids
 python3 -m venv venv/
 . venv/bin/activate
-pip install -c requirements/production.txt -c requirements/test.txt -e .[dev]
+pip install uv
+cp requirements/uv-3.10.lock uv.lock
+uv sync --all-groups --active  # install dependencies from uv.lock (includes dev dependencies)
+uv pip install -e .  # install package in editable mode
 
 # Please install pre-commit if you intend to contribute
 pre-commit install  # install the pre-commit hook
@@ -50,10 +53,6 @@ pytest  # run tests in the current environment
 
 # Other commands useful for development
 ./requirements/update.sh  # upgrade pinned dependency versions
-
-# Ensure that only packages pinned for production are installed
-# (beware that you will need to reinstall neuroglancer-scripts afterwards)
-pip-sync requirements/production.txt
 ```
 
 

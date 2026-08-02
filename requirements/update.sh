@@ -1,48 +1,38 @@
 #!/bin/sh -e
 
-# This script generates locked dependency files using uv.
-# Options passed to this script are forwarded to uv export.
+# This script generates a uv lockfile for Python 3.10 and creates symlinks
+# for Python 3.12 and 3.14 (matching the previous requirements.txt setup).
+# Options passed to this script are forwarded to uv lock.
 # Run with -U to upgrade all packages to latest versions.
 
 # Get the directory where this script is located
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_ROOT=$(dirname "$SCRIPT_DIR")
 
-# Detect Python version to determine which files to generate
-if python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 10) else 1)'; then
-  PY_VER=3.10
-elif python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 12) else 1)'; then
-  PY_VER=3.12
-elif python -c 'import sys; sys.exit(0 if sys.version_info[:2] == (3, 14) else 1)'; then
-  PY_VER=3.14
-else
-  echo "This script must be run with Python 3.10, 3.12, or 3.14" >&2
-  exit 1
-fi
-
-echo "Generating requirements files for Python ${PY_VER}..."
-
-# Use a temporary directory to avoid polluting the repo with uv.lock
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
-
 # Store the absolute path to requirements directory
 REQ_DIR="$REPO_ROOT/requirements"
 
-# Remove any symlinks so we can write actual files
-rm -f "$REQ_DIR/py${PY_VER}-production.txt" "$REQ_DIR/py${PY_VER}-test.txt"
+echo "Generating lockfile for Python 3.10..."
+
+# Use a temporary directory since uv lock always creates uv.lock in current dir
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
 
 cp "$REPO_ROOT/pyproject.toml" "$TMPDIR/"
 cd "$TMPDIR"
 
-# Generate production requirements (no dev dependencies)
-uv export --python "$PY_VER" --format requirements.txt --no-dev \
-  -o "$REQ_DIR/py${PY_VER}-production.txt" "$@"
+# Generate lockfile for Python 3.10 (works across all >=3.10 versions)
+# Use the Python version from the environment, or default to 3.10
+GENERATED_WITH="${UV_PYTHON:-3.10}"
+uv lock --python "$GENERATED_WITH" "$@"
 
-# Generate test requirements (includes production + dev dependencies)
-# Note: The test.in file references production.txt as a constraint.
-# For simplicity, we export all dependencies including dev group.
-uv export --python "$PY_VER" --format requirements.txt --all-extras \
-  -o "$REQ_DIR/py${PY_VER}-test.txt" "$@"
+# Move the lockfile to the requirements directory as uv-3.10.lock
+mv uv.lock "$REQ_DIR/uv-3.10.lock"
 
-echo "Requirements files generated: $REQ_DIR/py${PY_VER}-production.txt $REQ_DIR/py${PY_VER}-test.txt"
+# Create symlinks for Python 3.12 and 3.14 (matching previous setup)
+cd "$REQ_DIR"
+ln -sf uv-3.10.lock uv-3.12.lock
+ln -sf uv-3.10.lock uv-3.14.lock
+
+echo "Lockfile generated: $REQ_DIR/uv-3.10.lock"
+echo "Symlinks created: uv-3.12.lock -> uv-3.10.lock, uv-3.14.lock -> uv-3.10.lock"
