@@ -7,7 +7,7 @@ description, please consult the
 [BIDS specification](https://doi.org/10.5281/zenodo.3686061).
 
 This script imports data, but can also:
-* create ancillary files such as README, CHANGES, dataset_descrption.json
+* create ancillary files such as README, CHANGES, dataset_description.json
 * optionally, deface anatomical data with pydeface
 * run the bids-validator on the created dataset
 
@@ -224,7 +224,7 @@ Here is an example for the `participants_to_import.tsv` file:
         sub-01          tt989898_6405   {"sex":"F", "age":"45"}         01              2010-06-28	      prisma            [['24','anat','T1w'],['13','func','task-number_dir-ap_run-01_bold'],['14','func','task-number_dir-ap_run-01_sbref'],['5','fmap','dir-ap_epi',{'intendedFor':'/fmri/sub-301_task-number_dir-ap_run-01_bold'}]]
 
 #### User case for adding a field into the json file
-Here we are adding the IndendedFor field into the **fmap/sub-301_dir-ap_epi.json**. This field is not mandatory, but recommended. It seems
+Here we are adding the IntendedFor field into the **fmap/sub-301_dir-ap_epi.json**. This field is not mandatory, but recommended. It seems
 if you use fmriprep, this field is not directly read and fmriprep use the **PhaseEncodingDirection" information which give by the scanner.
 
 		participant_id  NIP     infos_participant       session_label   acq_date        acq_label       location        to_import
@@ -234,7 +234,7 @@ if you use fmriprep, this field is not directly read and fmriprep use the **Phas
 
 # Importation of events
 The importation of events can not be automatic because very often the events have to extract from log files depending on your stimulation presentation program (expyriment for python).
-Here we propose a possible solution, but we are truly free to import yourself into the bids_datset repository the events.
+Here we propose a possible solution, but we are truly free to import yourself into the bids_dataset repository the events.
 The events for functional runs will be automatically copied in the BIDS dataset if the files are available in a `recorded_events` folder that already respect the bids structure. Which means that files would have the same fields as the bold.nii files in its file name but its final name part would be events.tsv instead, for example:
 
     <data_root>/exp_info/recorded_events/sub-<sub_label>[/ses-<ses_label>]/func/sub-*_<task>_events.tsv
