@@ -15,9 +15,8 @@ dependencies = [
     "logutils",
     "mne-bids",
     "pandas",
-    "pydeface",
+    "pydeface>=2.1.0",
     "pydicom",
-    "setuptools<82.0.0",  # dependency of pydeface (for pkg_resources)
 ]
 requires-python = ">=3.10"
 readme = "README.md"
