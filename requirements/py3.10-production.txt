@@ -102,7 +102,7 @@ prov==2.1.1
     # via nipype
 puremagic==1.30
     # via nipype
-pydeface==2.0.2
+pydeface==2.1.0
     # via neurospin_to_bids (pyproject.toml)
 pydicom==3.0.1
     # via neurospin_to_bids (pyproject.toml)
@@ -152,9 +152,3 @@ tzdata==2025.3
     # via pandas
 urllib3==2.6.3
     # via requests
-
-# The following packages are considered to be unsafe in a requirements file:
-setuptools==81.0.0
-    # via
-    #   neurospin_to_bids (pyproject.toml)
-    #   pydeface
